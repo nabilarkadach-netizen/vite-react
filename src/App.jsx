@@ -1,4 +1,4 @@
-// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Scroll-to-Top Orb)
+// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Scroll-to-Top Orb + Persistent Phone Memory)
 // Requirements: React 18, Tailwind, framer-motion, clsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +13,21 @@ const PAL = {
   auroraA: "#8BA7FF",
   auroraB: "#F5C16E",
   ink: "#12151B",
+};
+
+/* ---------------- Persistent verified phone memory ---------------- */
+const saveVerifiedPhone = (phone, flag) => {
+  try {
+    localStorage.setItem("kidoose_verified_phone", JSON.stringify({ phone, flag }));
+  } catch {}
+};
+const getVerifiedPhone = () => {
+  try {
+    const data = JSON.parse(localStorage.getItem("kidoose_verified_phone"));
+    return data && data.phone ? data : null;
+  } catch {
+    return null;
+  }
 };
 
 /* ---------------- Country & Dial Helpers ---------------- */
@@ -639,7 +654,7 @@ const Footer = () => (
   </footer>
 );
 
-/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer, sample/trial modes) ---------------- */
+/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer, sample/trial modes, persistent phone) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTrial }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
 
@@ -657,9 +672,23 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
   const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [persisted, setPersisted] = useState(null);
   const popRef = useRef(null);
 
-  // reset on close
+  // On first open or when mode changes: if trial and we have a stored verified phone, prefill & mark verified
+  useEffect(() => {
+    const stored = getVerifiedPhone();
+    if (mode === "trial" && stored?.phone) {
+      setPhone(stored.phone);
+      setVerified(true);
+      setPersisted(stored);
+      setOtpSent(false);
+      setOtp("");
+      setSending(false);
+    }
+  }, [mode]);
+
+  // reset on modal close (keep localStorage memory)
   useEffect(() => {
     if (!open) {
       setPhone("");
@@ -672,6 +701,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
       setOtp("");
       setVerified(false);
       setResendTimer(0);
+      setPersisted(null);
     }
   }, [open, defaultPlan]);
 
@@ -730,12 +760,13 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
     }
   };
 
-  // auto-verify at 6 digits
+  // auto-verify at 6 digits; save verified phone to localStorage
   useEffect(() => {
     if (otpSent && !verified && otp.trim().length === 6) {
       setVerified(true);
+      saveVerifiedPhone(phone, flag);
     }
-  }, [otp, otpSent, verified]);
+  }, [otp, otpSent, verified, phone, flag]);
 
   const planList = [
     { id: "starter", name: "Starter", price: "$4.99/mo" },
@@ -810,7 +841,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                 type="tel"
                 className={clsx(
                   "w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 pr-[7.6rem]",
-                  (verified || otpSent) && "opacity-95"
+                  (verified || otpSent || persisted) && "opacity-95"
                 )}
                 placeholder={`${fmt.dial} ${fmt.mask}`}
                 inputMode="tel"
@@ -824,14 +855,14 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                   }
                 }}
                 onKeyDown={onEnter}
-                disabled={verified} // editable until verified
+                disabled={verified || !!persisted} // lock input if already verified from memory
                 aria-label="Phone number"
               />
 
               <button
                 className={clsx(
                   "absolute top-1/2 -translate-y-1/2 right-1.5 rounded-lg text-sm font-semibold transition px-3 py-1.5 min-w-[110px] flex items-center justify-center",
-                  verified
+                  verified || persisted
                     ? "bg-white text-[#12151B] cursor-default"
                     : sending
                     ? "bg-[#12151B] text-white opacity-80"
@@ -841,11 +872,13 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                     ? "bg-[#12151B] hover:bg-black text-white"
                     : "bg-white/15 text-white/60 cursor-not-allowed"
                 )}
-                disabled={verified || sending || otpSent || !isComplete}
-                onClick={() => (!verified && !otpSent ? sendOtp() : null)}
+                disabled={verified || persisted || sending || otpSent || !isComplete}
+                onClick={() => {
+                  if (!verified && !otpSent && !persisted) sendOtp();
+                }}
                 aria-label="Verify phone"
               >
-                {verified ? (
+                {verified || persisted ? (
                   "Verified"
                 ) : sending ? (
                   <motion.svg
@@ -866,9 +899,9 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
               </button>
             </div>
 
-            {/* OTP block */}
+            {/* OTP block — hidden if we already have a persisted verified phone */}
             <AnimatePresence>
-              {otpSent && !verified && (
+              {otpSent && !verified && !persisted && (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="mt-3">
                   <p className="text-white/80 text-sm">Check WhatsApp — we just sent your 6-digit code.</p>
                   <div className="mt-2 flex flex-col gap-2">
@@ -911,7 +944,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
 
             {/* Post-verify content */}
             {/* SAMPLE MODE → Success block (skip plan) */}
-            {mode === "sample" && verified && (
+            {mode === "sample" && (verified || persisted) && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -928,6 +961,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                 <button
                   className="mt-3 w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold"
                   onClick={() => {
+                    saveVerifiedPhone(phone, flag); // ensure it persists before switching
                     if (onSwitchToTrial) onSwitchToTrial();
                   }}
                 >
@@ -936,9 +970,14 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
               </motion.div>
             )}
 
-            {/* TRIAL MODE → Details + Plan (unlocked after verified) */}
+            {/* TRIAL MODE → Details + Plan (unlocked immediately if verified/persisted) */}
             {mode === "trial" && (
-              <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
+              <div
+                className={clsx(
+                  "mt-4 space-y-3 transition duration-500",
+                  !verified && !persisted && "blur-sm pointer-events-none opacity-60"
+                )}
+              >
                 <input
                   className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
                   placeholder="Parent name"
@@ -962,7 +1001,9 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                     aria-haspopup="listbox"
                     aria-expanded={planOpen}
                   >
-                    {plan ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.price}` : "Select plan"}
+                    {plan
+                      ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.price}`
+                      : "Select plan"}
                   </button>
 
                   <AnimatePresence>
