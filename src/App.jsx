@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 export default function Header() {
-  const GAP_PX = 6; // Equal spacing between all elements
+  const GAP_PX = 6; // spacing between KID ↔ eyes ↔ SE
 
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
@@ -23,13 +23,14 @@ export default function Header() {
 
 /* -------------------- Eyes -------------------- */
 function CuteEyes({ gap }) {
-  const EYE = 27;                       // slightly smaller than letters for optical match
-  const PUPIL = Math.round(EYE * 0.38); // proportional pupil
-  const GAP = gap - 2;                  // slightly tighter between eyes
-  const LIMIT = Math.round(EYE * 0.2);  // max pupil travel
+  const EYE = 27;
+  const PUPIL = Math.round(EYE * 0.38);
+  const GAP = gap - 2;
+  const LIMIT = Math.round(EYE * 0.2);
 
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const wrapRef = useRef(null);
+  const leftWrap = useRef(null);
+  const rightWrap = useRef(null);
   const leftRef = useRef(null);
   const rightRef = useRef(null);
 
@@ -40,49 +41,45 @@ function CuteEyes({ gap }) {
     return () => window.removeEventListener("mousemove", handle);
   }, []);
 
-  // Move pupils
+  // Independent tracking for each eye
   useEffect(() => {
-    const update = () => {
-      const wrap = wrapRef.current;
-      if (!wrap) return;
+    const move = () => {
+      const updateEye = (wrap, pupil) => {
+        if (!wrap || !pupil) return;
+        const rect = wrap.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = mouse.x - cx;
+        const dy = mouse.y - cy;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = (dx / len) * LIMIT;
+        const ny = (dy / len) * LIMIT;
+        pupil.style.transform = `translate(${nx}px, ${ny}px)`;
+      };
 
-      const rect = wrap.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = mouse.x - cx;
-      const dy = mouse.y - cy;
-      const len = Math.hypot(dx, dy) || 1;
+      updateEye(leftWrap.current, leftRef.current);
+      updateEye(rightWrap.current, rightRef.current);
 
-      const nx = (dx / len) * LIMIT;
-      const ny = (dy / len) * LIMIT;
-
-      [leftRef.current, rightRef.current].forEach((el) => {
-        if (el) el.style.transform = `translate(${nx}px, ${ny}px)`;
-      });
-
-      requestAnimationFrame(update);
+      requestAnimationFrame(move);
     };
-    update();
+    move();
   }, [mouse, LIMIT]);
 
   return (
-    <div
-      ref={wrapRef}
-      className="relative flex items-center justify-center"
-      style={{ width: EYE * 2 + GAP, height: EYE }}
-    >
-      <Eye size={EYE} pupil={PUPIL} refPupil={leftRef} />
+    <div className="relative flex items-center justify-center" style={{ height: EYE }}>
+      <Eye size={EYE} pupil={PUPIL} wrapRef={leftWrap} refPupil={leftRef} />
       <div style={{ width: GAP }} />
-      <Eye size={EYE} pupil={PUPIL} refPupil={rightRef} />
+      <Eye size={EYE} pupil={PUPIL} wrapRef={rightWrap} refPupil={rightRef} />
       <style>{blinkCSS}</style>
     </div>
   );
 }
 
 /* -------------------- Single Eye -------------------- */
-function Eye({ size, pupil, refPupil }) {
+function Eye({ size, pupil, wrapRef, refPupil }) {
   return (
     <div
+      ref={wrapRef}
       className="relative rounded-full overflow-hidden flex items-center justify-center"
       style={{
         width: size,
@@ -108,7 +105,7 @@ function Eye({ size, pupil, refPupil }) {
             "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
         }}
       >
-        {/* glossy highlight — moves *with* pupil */}
+        {/* glossy highlight — moves with pupil */}
         <div
           className="absolute rounded-full"
           style={{
