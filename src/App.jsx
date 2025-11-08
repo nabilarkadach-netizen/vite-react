@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 export default function Header() {
-  const GAP_PX = 6; // ← single source of truth for ALL horizontal spacing
+  const GAP_PX = 6; // adjust this to control spacing between everything
 
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
@@ -23,9 +23,9 @@ export default function Header() {
 
 /* -------------------- Eyes -------------------- */
 function CuteEyes({ gap }) {
-  const EYE = 30;                       // a bit smaller than letters
-  const PUPIL = Math.round(EYE * 0.38); // proportionate pupil
-  const GAP = gap;                      // same gap as letters
+  const EYE = 27;                       // smaller than letters for optical match
+  const PUPIL = Math.round(EYE * 0.38); // proportional pupil size
+  const GAP = gap - 2;                  // slightly tighter between eyes
   const LIMIT = Math.round(EYE * 0.2);  // max pupil travel
 
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
@@ -80,6 +80,7 @@ function CuteEyes({ gap }) {
   );
 }
 
+/* -------------------- Eye -------------------- */
 function Eye({ size, pupil, refPupil }) {
   return (
     <div
@@ -116,6 +117,7 @@ function Eye({ size, pupil, refPupil }) {
   );
 }
 
+/* -------------------- Blink Animation -------------------- */
 const blinkCSS = `
 @keyframes kid-blink-frames {
   0%, 92%, 100% { transform: scaleY(1); background: rgba(255,255,255,0); }
