@@ -287,7 +287,8 @@ const WhatsAppDemo = () => {
   }, []);
 
   return (
-    <div className="relative w-full max-w-[390px] mx-auto scale-95 sm:scale-100 rounded-2xl overflow-hidden shadow-2xl border border-black/40 bg-[#111B21]">
+    <div className="relative w-full max-w-[390px] mx-auto scale-95 sm:scale-100 rounded-3xl overflow-hidden backdrop-blur-xl bg-white/5 shadow-[0_8px_40px_rgba(0,0,0,0.35)] border border-white/10">
+
       {/* Top status bar */}
       <div className="bg-black flex justify-between items-center px-4 pt-2 pb-1">
         <Clock time={time} />
@@ -315,10 +316,7 @@ const WhatsAppDemo = () => {
       </div>
 
       {/* Chat area */}
-      <div
-        className="relative min-h-[520px] px-3 py-3"
-        style={{ backgroundImage: WALLPAPER, backgroundRepeat: "repeat", backgroundSize: "200px 200px" }}
-      >
+      <div className="relative min-h-[520px] px-3 py-3 bg-transparent">
         {stage >= 1 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -420,7 +418,9 @@ const Hero = ({ onPrimary, onDemo }) => (
 
       <div className="mt-8 flex justify-center pb-20 sm:pb-0">
         {/* NEW: WhatsApp replica embedded exactly as provided */}
-        <WhatsAppDemo />
+        <div className="flex justify-center pb-16 sm:pb-0">
+  <WhatsAppDemo />
+</div>
       </div>
     </div>
   </section>
@@ -632,7 +632,10 @@ const DemoModal = ({ open, onClose, onStart }) => (
 
           <div className="mx-auto grid place-items-center">
             {/* NEW: WhatsApp replica inside modal */}
-            <WhatsAppDemo />
+            <div className="flex justify-center pb-16 sm:pb-0">
+  <WhatsAppDemo />
+</div>
+
           </div>
 
           <div className="mt-4 md:mt-6 flex justify-center">
