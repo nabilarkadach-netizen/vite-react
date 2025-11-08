@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useAnimationFrame } from "framer-motion";
-import { useRef } from "react";
 
 export default function Header() {
   const orangeRef = useRef(null);
@@ -8,26 +7,29 @@ export default function Header() {
 
   useAnimationFrame((t) => {
     const time = t / 1000;
-    const angle = time * 1.2; // rotation speed
-    const radius = 9; // how far they orbit apart
+    const angle = time * 1.2; // speed
+    const radius = 9; // distance between orbs
 
-    // Circular (horizontal) orbit inside fixed O-space
+    // Orb positions (horizontal orbit)
     const orangeX = Math.sin(angle) * radius;
     const blueX = Math.sin(angle + Math.PI) * radius;
 
-    const orangeDepth = Math.cos(angle);
-    const blueDepth = Math.cos(angle + Math.PI);
+    // Depth (decides which one is in front)
+    const orangeFront = Math.cos(angle) > 0;
+    const blueFront = Math.cos(angle + Math.PI) > 0;
 
-    if (orangeRef.current) {
+    // Update transforms + depth
+    if (orangeRef.current && blueRef.current) {
       orangeRef.current.style.transform = `translateX(${orangeX}px)`;
-      orangeRef.current.style.opacity = orangeDepth > 0 ? 1 : 0.3; // fade when behind
-      orangeRef.current.style.zIndex = orangeDepth > 0 ? 2 : 0;
-    }
-
-    if (blueRef.current) {
       blueRef.current.style.transform = `translateX(${blueX}px)`;
-      blueRef.current.style.opacity = blueDepth > 0 ? 1 : 0.3;
-      blueRef.current.style.zIndex = blueDepth > 0 ? 2 : 0;
+
+      // Z-index control for front/back illusion
+      orangeRef.current.style.zIndex = orangeFront ? 2 : 0;
+      blueRef.current.style.zIndex = blueFront ? 2 : 0;
+
+      // No opacity blending — just show/hide
+      orangeRef.current.style.visibility = orangeFront ? "visible" : "hidden";
+      blueRef.current.style.visibility = blueFront ? "visible" : "hidden";
     }
   });
 
@@ -38,7 +40,7 @@ export default function Header() {
           KID
         </span>
 
-        {/* Orbit container replacing OO */}
+        {/* Orbit container replacing the two O's */}
         <div className="relative w-[56px] h-[36px] flex items-center justify-center">
           {/* Orange orb */}
           <div
