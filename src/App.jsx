@@ -2,9 +2,9 @@ import React, { useRef } from "react";
 import { useAnimationFrame } from "framer-motion";
 
 export default function Header() {
-  const ORB = 28; // orb diameter
-  const INNER_GAP = 6; // small gap between orbs
-  const OUTER_GAP = 16; // gap between orbs and letters (smaller than before)
+  const ORB = 28;        // orb diameter (matches letter height)
+  const INNER_GAP = 6;   // space between orbs
+  const OUTER_GAP = 8;   // now smaller — tighter to text
   const SPEED = 0.9;
 
   const orangeRef = useRef(null);
@@ -41,7 +41,7 @@ export default function Header() {
           KID
         </span>
 
-        {/* Orbs group behaves as the "OO" */}
+        {/* Orbs group as “OO” */}
         <div
           className="relative flex items-center justify-center"
           style={{
