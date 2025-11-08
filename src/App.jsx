@@ -3,12 +3,12 @@ import React, { useEffect, useRef, useState } from "react";
 export default function Header() {
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
-      <div className="flex items-center select-none">
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide mr-2">
+      <div className="flex items-center select-none gap-[8px]">
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">
           KID
         </span>
         <CuteEyes />
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide ml-2">
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">
           SE
         </span>
       </div>
@@ -18,10 +18,10 @@ export default function Header() {
 
 /* -------------------- Eyes -------------------- */
 function CuteEyes() {
-  const EYE = 30; // outer diameter
-  const PUPIL = 12;
-  const GAP = 8;
-  const LIMIT = 6; // max pupil travel
+  const EYE = 38; // match letter height
+  const PUPIL = 14;
+  const GAP = 8; // equal spacing
+  const LIMIT = 6;
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const wrapRef = useRef(null);
   const leftRef = useRef(null);
@@ -48,8 +48,7 @@ function CuteEyes() {
       const ny = (dy / len) * LIMIT;
 
       [leftRef.current, rightRef.current].forEach((el) => {
-        if (el)
-          el.style.transform = `translate(${nx}px, ${ny}px)`;
+        if (el) el.style.transform = `translate(${nx}px, ${ny}px)`;
       });
 
       requestAnimationFrame(update);
@@ -71,6 +70,7 @@ function CuteEyes() {
   );
 }
 
+/* -------------------- Eye -------------------- */
 function Eye({ size, pupil, refPupil }) {
   return (
     <div
@@ -106,6 +106,7 @@ function Eye({ size, pupil, refPupil }) {
   );
 }
 
+/* -------------------- Blink Animation -------------------- */
 const blinkCSS = `
 @keyframes kid-blink-frames {
   0%, 92%, 100% { transform: scaleY(1); background: rgba(255,255,255,0); }
