@@ -1,4 +1,4 @@
-// App.jsx — KIDOOSE Conversion Edition (WhatsApp Dark iPhone Clone)
+// App.jsx — KIDOOSE site with WhatsApp Dark iPhone Screenshot Clone (no phone frame)
 // Tech: React 18, TailwindCSS, framer-motion, clsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -23,7 +23,6 @@ const COUNTRY_FORMATS = {
   IE: { dial: "+353", mask: "-- --- ----",   max: 9 },
   SG: { dial: "+65",  mask: "---- ----",     max: 8 },
   IN: { dial: "+91",  mask: "----- -----",   max: 10 },
-  // MENA focus
   TR: { dial: "+90",  mask: "--- --- ----",  max: 10 },
   AE: { dial: "+971", mask: "-- --- ----",   max: 9 },
   SA: { dial: "+966", mask: "-- --- ----",   max: 9 },
@@ -151,9 +150,25 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
       <KidooseLogo />
       <AnimatePresence>
         {showButtons && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }} className="hidden md:flex items-center gap-3">
-            <button onClick={onDemo} className="rounded-2xl border border-white/25 bg-white/5 text-white px-4 py-2 font-semibold hover:bg-white/10">Play sample</button>
-            <button onClick={onPrimary} className="rounded-2xl bg-white text-gray-900 px-5 py-2 font-semibold shadow hover:shadow-md">Start Free Week</button>
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+            className="hidden md:flex items-center gap-3"
+          >
+            <button
+              onClick={onDemo}
+              className="rounded-2xl border border-white/25 bg-white/5 text-white px-4 py-2 font-semibold hover:bg-white/10"
+            >
+              Play sample
+            </button>
+            <button
+              onClick={onPrimary}
+              className="rounded-2xl bg-white text-gray-900 px-5 py-2 font-semibold shadow hover:shadow-md"
+            >
+              Start Free Week
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -161,152 +176,107 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
   </header>
 );
 
-/* ========== WHATSAPP DARK iPHONE CLONE ========== */
+/* ===========================================================
+   WHATSAPP DARK iPHONE SCREENSHOT (no phone frame, top-rounded)
+   =========================================================== */
 
 const WA = {
   bgTop: "#0B141A",
   bg: "#111B21",
   header: "#202C33",
-  incoming: "#1F2C34",
-  outgoing: "#005C4B",
+  incoming: "#202C33", // iOS dark incoming
   meta: "#8696A0",
+  name: "#E9EDEF",
+  online: "#6BEB7A",
+  icon: "#AEBAC1",
   input: "#202C33",
+  inputFill: "#2A3942",
 };
 
-// Minimal inline SVG icons (iOS-ish weight)
+// light wallpaper SVG tile (subtle)
+const WALLPAPER = encodeURIComponent(`
+<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'>
+  <g fill='none' stroke='white' stroke-opacity='0.06' stroke-width='2'>
+    <path d='M30 80c20-20 60-20 80 0s20 60 0 80-60 20-80 0-20-60 0-80z'/>
+    <circle cx='256' cy='256' r='40'/>
+    <path d='M420 110c18-18 48-18 66 0s18 48 0 66-48 18-66 0-18-48 0-66z'/>
+    <path d='M140 420c24-24 64-24 88 0s24 64 0 88-64 24-88 0-24-64 0-88z'/>
+  </g>
+</svg>`);
+
+// Icons (inline, iOS-like)
 const Icon = {
-  Back: (p) => (<svg width="22" height="22" viewBox="0 0 24 24" {...p}><path fill="currentColor" d="M15.5 19.5L8 12l7.5-7.5" stroke="currentColor" strokeWidth="2" fillOpacity="0"/></svg>),
-  Phone: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path fill="currentColor" d="M6.6 10.8c1.7 3.4 3.9 5.6 7.2 7.2l2.4-2.4c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.7.6.6 0 1 .4 1 1V21c0 .6-.4 1-1 1C10.8 22 2 13.2 2 3c0-.6.4-1 1-1h3c.6 0 1 .4 1 1 0 1.2.2 2.5.6 3.7.1.4 0 .8-.3 1.1L6.6 10.8z"/></svg>),
-  Video: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path fill="currentColor" d="M15 8l5-3v14l-5-3v2H3V6h12v2z"/></svg>),
-  Attach: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path fill="currentColor" d="M7 13.5V7a5 5 0 0 1 10 0v8a3.5 3.5 0 1 1-7 0V8a2 2 0 0 1 4 0v7" stroke="currentColor" strokeWidth="2" fillOpacity="0"/></svg>),
-  Camera: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path fill="currentColor" d="M9 5l1.5-2h3L15 5h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4zm3 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/></svg>),
-  Mic: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm-7-3h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.9V21h-2v-2.1A7 7 0 0 1 5 12z"/></svg>),
-  Send: (p)=>(<svg width="22" height="22" viewBox="0 0 24 24" {...p}><path fill="currentColor" d="M3 20l18-8L3 4l3 7-3 9zm3-9.8l9.7 1.8-9.7 1.8 1.7-3.6z"/></svg>),
+  Back: (p)=>(<svg width="22" height="22" viewBox="0 0 24 24" {...p}><path d="M15.5 19.5L8 12l7.5-7.5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>),
+  Video: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path d="M15 8l5-3v14l-5-3v2H3V6h12v2z" fill="currentColor"/></svg>),
+  Phone: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path d="M6.6 10.8c1.7 3.4 3.9 5.6 7.2 7.2l2.4-2.4c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.7.6.6 0 1 .4 1 1V21c0 .6-.4 1-1 1C10.8 22 2 13.2 2 3c0-.6.4-1 1-1h3c.6 0 1 .4 1 1 0 1.2.2 2.5.6 3.7.1.4 0 .8-.3 1.1L6.6 10.8z" fill="currentColor"/></svg>),
+  Attach: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path d="M7 13.5V7a5 5 0 0 1 10 0v8a3.5 3.5 0 1 1-7 0V8a2 2 0 0 1 4 0v7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/></svg>),
+  Camera: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path d="M9 5l1.5-2h3L15 5h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4zm3 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" fill="currentColor"/></svg>),
+  Mic: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm-7-3h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.9V21h-2v-2.1A7 7 0 0 1 5 12z" fill="currentColor"/></svg>),
+  Send: (p)=>(<svg width="22" height="22" viewBox="0 0 24 24" {...p}><path d="M3 20l18-8L3 4l3 7-3 9zm3-9.8l9.7 1.8-9.7 1.8 1.7-3.6z" fill="currentColor"/></svg>),
 };
 
-const IPhoneFrameDark = ({ children }) => (
-  <div className="relative mx-auto w-[360px] sm:w-[380px]">
-    <div className="relative rounded-[46px] border-[10px] border-black/90 bg-black/90 shadow-2xl overflow-hidden">
-      {/* Notch */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-0 h-7 w-40 bg-black/90 rounded-b-2xl z-20" />
-      {/* Screen */}
-      <div className="relative h-[700px]" style={{ background: `linear-gradient(180deg, ${WA.bgTop}, ${WA.bg})` }}>
-        <div className="relative z-10 h-full">{children}</div>
-      </div>
-    </div>
-  </div>
-);
-
-/* ------ Bubble (dark) ------ */
-const Bubble = ({ side = "in", time = "09:00", children }) => {
-  const isOut = side === "out";
-  const bg = isOut ? WA.outgoing : WA.incoming;
-  const align = isOut ? "items-end" : "items-start";
-  const radius = isOut
-    ? "rounded-[18px] rounded-tr-[6px]"   // out: tighter top-right corner (WhatsApp feel)
-    : "rounded-[18px] rounded-tl-[6px]";  // in: tighter top-left
-  return (
-    <div className={clsx("w-full flex", align)}>
-      <div className={clsx("max-w-[78%] px-3 py-2 border border-black/20", radius)} style={{ background: bg }}>
-        <div className="text-[14px] leading-snug text-white/95">{children}</div>
-        <div className="mt-1 text-right text-[10px]" style={{ color: WA.meta }}>{time}</div>
-      </div>
-    </div>
-  );
-};
-
-/* ------ Typing indicator ------ */
-const TypingDots = () => (
-  <div className="flex items-center gap-1 px-2 py-1">
-    <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:-.2s]" />
-    <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:-.1s]" />
-    <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce" />
-  </div>
-);
-
-/* ------ WhatsApp Dark Conversation ------ */
-const WhatsAppDarkDemo = () => {
-  // Conversation script (speaker, message, time)
-  const SCRIPT = [
-    { who: "bot", text: "🌞 Morning Play: Build a paper airplane — one-minute race!", time: "08:59" },
-    { who: "me",  text: "Nice! We’ll try before school.", time: "09:00" },
-    { who: "bot", text: "🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers…”", time: "19:00" },
-    { who: "me",  text: "Perfect for tonight 👍", time: "19:02" },
+// Single-direction chat (Kidoose only)
+const WhatsAppScreenshot = () => {
+  const messages = [
+    { text: "🌞 Morning Play: Build a paper airplane — one-minute race!", time: "08:59" },
+    { text: "🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers…”", time: "19:00" },
   ];
 
-  const [shown, setShown] = useState(0);
-  const [typing, setTyping] = useState(false);
-
-  useEffect(() => {
-    let t1;
-    const step = () => {
-      if (shown >= SCRIPT.length) return;
-      const next = SCRIPT[shown];
-      if (next.who === "bot") {
-        setTyping(true);
-        t1 = setTimeout(() => {
-          setTyping(false);
-          setShown((s) => s + 1);
-        }, 900); // typing delay
-      } else {
-        setShown((s) => s + 1);
-      }
-    };
-    const delay = shown === 0 ? 500 : 700;
-    const id = setTimeout(step, delay);
-    return () => { clearTimeout(id); clearTimeout(t1); };
-  }, [shown]);
-
   return (
-    <IPhoneFrameDark>
+    <div
+      className="mx-auto w-[360px] sm:w-[390px] rounded-t-[28px] overflow-hidden shadow-2xl"
+      style={{
+        background: `linear-gradient(180deg, ${WA.bgTop}, ${WA.bg}),
+          url("data:image/svg+xml,${WALLPAPER}")`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "512px 512px",
+      }}
+    >
       {/* Header */}
-      <div className="sticky top-0 z-20">
-        <div className="h-12" style={{ background: WA.header, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="h-12 flex items-center gap-2 px-3 text-white">
-            <span className="text-white/90"><Icon.Back /></span>
-            <div className="w-7 h-7 rounded-full bg-[#2A3942] border border-white/10" />
-            <div className="flex-1 leading-tight">
-              <div className="text-[14px] font-semibold">Kidoose</div>
-              <div className="text-[11px] text-emerald-400">online</div>
-            </div>
-            <span className="text-white/70"><Icon.Video /></span>
-            <span className="text-white/70 ml-2"><Icon.Phone /></span>
+      <div className="h-12" style={{ background: WA.header, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="h-12 flex items-center gap-2 px-3 text-white select-none">
+          <span className="text-[${WA.icon}] text-white/70"><Icon.Back color={WA.icon} /></span>
+          <div className="w-7 h-7 rounded-full bg-[#2A3942] border border-white/10" />
+          <div className="flex-1 leading-tight">
+            <div className="text-[14px] font-semibold" style={{ color: WA.name }}>Kidoose</div>
+            <div className="text-[11px]" style={{ color: WA.online }}>online</div>
           </div>
+          <span style={{ color: WA.icon }}><Icon.Video color={WA.icon} /></span>
+          <span className="ml-2" style={{ color: WA.icon }}><Icon.Phone color={WA.icon} /></span>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="px-2 py-2 space-y-2 overflow-y-auto h-[640px]">
-        {SCRIPT.slice(0, shown).map((m, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-          >
-            <Bubble side={m.who === "me" ? "out" : "in"} time={m.time}>{m.text}</Bubble>
-          </motion.div>
-        ))}
-        {typing && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="w-full flex items-start">
-            <div className="max-w-[60%] px-3 py-2 border border-black/20 rounded-[18px] rounded-tl-[6px]" style={{ background: WA.incoming }}>
-              <TypingDots />
+      {/* Messages (incoming only) */}
+      <div className="px-2 py-3 space-y-2" style={{ minHeight: 380 }}>
+        {messages.map((m, i) => (
+          <div key={i} className="w-full flex items-start">
+            <div
+              className="max-w-[84%] px-[10px] py-[7px] rounded-[18px] rounded-tl-[6px] border border-black/25"
+              style={{ background: WA.incoming }}
+            >
+              <div className="text-[14px] leading-[1.35] text-white/95">{m.text}</div>
+              <div className="text-right text-[10px] mt-1" style={{ color: WA.meta }}>{m.time}</div>
             </div>
-          </motion.div>
-        )}
+          </div>
+        ))}
       </div>
 
       {/* Composer */}
-      <div className="absolute bottom-0 left-0 right-0" style={{ background: WA.input, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="px-2 py-2 flex items-center gap-2 text-white/80">
-          <span className="text-white/70"><Icon.Attach /></span>
-          <div className="flex-1 bg-[#2A3942] border border-white/10 rounded-full px-4 py-2 text-[14px] text-white/70">Message</div>
-          <span className="text-white/70"><Icon.Camera /></span>
-          <span className="text-white/70"><Icon.Mic /></span>
-          <span className="text-white/70"><Icon.Send /></span>
+      <div className="px-3 py-2" style={{ background: WA.input, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-2 text-white/80">
+          <span style={{ color: WA.icon }}><Icon.Attach color={WA.icon} /></span>
+          <div
+            className="flex-1 rounded-full px-4 py-2 text-[14px]"
+            style={{ background: WA.inputFill, color: "#AEBAC1", border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            Message
+          </div>
+          <span style={{ color: WA.icon }}><Icon.Camera color={WA.icon} /></span>
+          <span style={{ color: WA.icon }}><Icon.Mic color={WA.icon} /></span>
+          <span style={{ color: WA.icon }}><Icon.Send color={WA.icon} /></span>
         </div>
       </div>
-    </IPhoneFrameDark>
+    </div>
   );
 };
 
@@ -328,26 +298,6 @@ const TrustStrip = () => (
     </div>
   </section>
 );
-
-/* ---------------- Inline Samples Panel (kept) ---------------- */
-const SamplePanel = ({ intent }) => {
-  const showBedtime = intent === "bedtime" || intent === "default";
-  const showMorning = intent === "activities" || intent === "morning" || intent === "default";
-  return (
-    <div className="mt-6 grid gap-3">
-      {showMorning && (
-        <div className="rounded-2xl px-4 py-3 text-[15px]" style={{ background: "#1F2C34", color: "#E9EDEF", border: "1px solid rgba(255,255,255,0.06)" }}>
-          🌞 Morning Play: Sock-ball bowling — 3 rolled socks, 6 cups. 2 minutes. Go!
-        </div>
-      )}
-      {showBedtime && (
-        <div className="rounded-2xl px-4 py-3 text-[15px]" style={{ background: "#1F2C34", color: "#E9EDEF", border: "1px solid rgba(255,255,255,0.06)" }}>
-          🌙 Bedtime: “Nora tucked the day into a tiny pocket and listened to the quiet…” …
-        </div>
-      )}
-    </div>
-  );
-};
 
 /* ---------------- Hero ---------------- */
 const Hero = ({ onPrimary, onDemo, intent }) => {
@@ -371,9 +321,8 @@ const Hero = ({ onPrimary, onDemo, intent }) => {
         <p className="mt-4 text-white/75 italic">No charge until day 8 · Cancel anytime</p>
 
         <div className="mt-8">
-          {/* DARK WhatsApp iPhone clone */}
-          <WhatsAppDarkDemo />
-          <SamplePanel intent={intent} />
+          {/* WhatsApp Dark Screenshot (no frame) */}
+          <WhatsAppScreenshot />
         </div>
       </div>
     </section>
@@ -493,18 +442,45 @@ const FAQ = () => (
   </section>
 );
 
-/* ---------------- Demo Modal ---------------- */
+/* ---------------- Demo Modal (reuses screenshot) ---------------- */
 const DemoModal = ({ open, onClose, onStart }) => (
   <AnimatePresence>
     {open && (
-      <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-        <motion.div className="relative w-full max-w-[90vw] sm:max-w-[420px] md:max-w-[520px] rounded-3xl border border-white/12 p-4 md:p-6 text-white" style={{ background: "linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(32,44,51,0.98) 100%)" }} initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
-          <button onClick={onClose} className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/40 border border-white/20 grid place-items-center hover:bg-black/55" aria-label="Close">✕</button>
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <motion.div
+          className="relative w-full max-w-[90vw] sm:max-w-[420px] md:max-w-[520px] rounded-3xl border border-white/12 p-4 md:p-6 text-white"
+          style={{ background: "linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(32,44,51,0.98) 100%)" }}
+          initial={{ scale: 0.98, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.98, opacity: 0 }}
+        >
+          <button
+            onClick={onClose}
+            className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/40 border border-white/20 grid place-items-center hover:bg-black/55"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+
           <div className="mx-auto grid place-items-center">
-            <WhatsAppDarkDemo />
+            <WhatsAppScreenshot />
           </div>
+
           <div className="mt-4 md:mt-6 flex justify-center">
-            <button onClick={onStart} className="rounded-2xl bg-white text-[#12151B] px-6 py-3 font-semibold shadow hover:shadow-md">Start my free trial</button>
+            <button
+              onClick={onStart}
+              className="rounded-2xl bg-white text-[#12151B] px-6 py-3 font-semibold shadow hover:shadow-md"
+            >
+              Start my free trial
+            </button>
           </div>
         </motion.div>
       </motion.div>
@@ -517,6 +493,8 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
 
   const fmtBase = COUNTRY_FORMATS[countryCode] || COUNTRY_FORMATS.DEFAULT;
+  theFmt: {
+  }
   const fmt = { dial: fmtBase.dial || dialCode || "+1", mask: fmtBase.mask, max: fmtBase.max };
   const dialDigits = fmt.dial.replace(/\D/g, "");
 
@@ -529,7 +507,6 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
-  const [step, setStep] = useState(1);
   const [resendTimer, setResendTimer] = useState(0);
   const popRef = useRef(null);
 
@@ -537,7 +514,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     if (!open) {
       setPhone(""); setParent(""); setChild(""); setPlanOpen(false);
       setPlan(defaultPlan?.id ?? ""); setSending(false); setOtpSent(false);
-      setOtp(""); setVerified(false); setStep(1); setResendTimer(0);
+      setOtp(""); setVerified(false); setResendTimer(0);
     }
   }, [open, defaultPlan]);
 
@@ -577,15 +554,11 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     if (!isComplete || sending || verified || otpSent) return;
     setSending(true);
     setOtp("");
-    setTimeout(() => { setSending(false); setOtpSent(true); setStep(2); setResendTimer(30); }, 1200);
-  };
-
-  const onEnter = (e) => {
-    if (e.key === "Enter" && isComplete && !sending && !verified && !otpSent) { e.preventDefault(); sendOtp(); }
+    setTimeout(() => { setSending(false); setOtpSent(true); }, 1200);
   };
 
   useEffect(() => {
-    if (otpSent && !verified && otp.trim().length === 6) { setVerified(true); setStep(3); }
+    if (otpSent && !verified && otp.trim().length === 6) setVerified(true);
   }, [otp, otpSent, verified]);
 
   return (
@@ -595,63 +568,53 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
           <motion.div className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6" style={{ background: "linear-gradient(180deg, rgba(17,27,33,0.96) 0%, rgba(32,44,51,0.96) 100%)" }} initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
             <button onClick={onClose} className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/40 border border-white/20 grid place-items-center hover:bg-black/55" aria-label="Close">✕</button>
 
-            <h3 className="text-2xl md:text-3xl font-extrabold">Start your free week <span className="inline-block ml-1">✨</span></h3>
-            <p className="text-white/85 mt-1">No charge until day 8 · Cancel anytime · Messages via WhatsApp {isoToFlagEmoji(countryCode)}</p>
+            <h3 className="text-2xl md:text-3xl font-extrabold">Start your free week ✨</h3>
+            <p className="text-white/85 mt-1">No charge until day 8 · Cancel anytime · Messages via WhatsApp {flag}</p>
 
-            {/* Step indicator */}
-            <div className="mt-3 flex items-center gap-2 text-xs text-white/70">
-              {[1,2,3].map((n)=>(
-                <div key={n} className="flex items-center gap-2">
-                  <div className={clsx("w-6 h-6 grid place-items-center rounded-full border", (n <= (verified ? 3 : otpSent ? 2 : 1)) ? "bg-white text-[#12151B] border-white" : "border-white/30")}>{n}</div>
-                  {n < 3 && <div className="w-6 h-[1px] bg-white/30" />}
-                </div>
-              ))}
-              <div className="ml-2 text-white/70">{verified ? "Details" : otpSent ? "Enter OTP" : "Verify phone"}</div>
-            </div>
-
-            {/* Phone input + Verify */}
             <div className="relative mt-5 w-full">
-              <input id="phone-input" type="tel" className={clsx("w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 pr-[7.6rem]", (verified || otpSent) && "opacity-95")} placeholder={`${(COUNTRY_FORMATS[countryCode]||COUNTRY_FORMATS.DEFAULT).dial} ${(COUNTRY_FORMATS[countryCode]||COUNTRY_FORMATS.DEFAULT).mask}`} inputMode="tel" value={phone}
-                onChange={(e)=>{handlePhoneChange(e); const digits=e.target.value.replace(/\D/g,""); const localDigits=digits.startsWith((COUNTRY_FORMATS[countryCode]||COUNTRY_FORMATS.DEFAULT).dial.replace(/\D/g,""))?digits.slice((COUNTRY_FORMATS[countryCode]||COUNTRY_FORMATS.DEFAULT).dial.replace(/\D/g,"").length):digits; if(localDigits.length===(COUNTRY_FORMATS[countryCode]||COUNTRY_FORMATS.DEFAULT).max&&!sending&&!verified&&!otpSent){sendOtp();}}}
-                onKeyDown={onEnter} disabled={verified} aria-label="Phone number" />
-              <button className={clsx("absolute top-1/2 -translate-y-1/2 right-1.5 rounded-lg text-sm font-semibold transition px-3 py-1.5 min-w-[110px] flex items-center justify-center", verified ? "bg-white text-[#12151B] cursor-default" : sending ? "bg-[#12151B] text-white opacity-80" : otpSent ? "bg-white/15 text-white/60 cursor-not-allowed" : isComplete ? "bg-[#12151B] hover:bg-black text-white" : "bg-white/15 text-white/60 cursor-not-allowed")} disabled={verified || sending || otpSent || !isComplete} onClick={()=>(!verified && !otpSent ? sendOtp() : null)} aria-label="Verify phone">
-                {verified ? "Verified" : sending ? (<motion.svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" /><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></motion.svg>) : otpSent ? "OTP Sent" : "Verify"}
+              <input
+                type="tel"
+                className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 pr-[7.6rem]"
+                placeholder={`${fmt.dial} ${fmt.mask}`}
+                inputMode="tel"
+                value={phone}
+                onChange={handlePhoneChange}
+                disabled={verified}
+              />
+              <button
+                className={clsx(
+                  "absolute top-1/2 -translate-y-1/2 right-1.5 rounded-lg text-sm font-semibold transition px-3 py-1.5 min-w-[110px] flex items-center justify-center",
+                  verified
+                    ? "bg-white text-[#12151B] cursor-default"
+                    : otpSent
+                    ? "bg-white/15 text-white/60 cursor-not-allowed"
+                    : isComplete
+                    ? "bg-[#12151B] hover:bg-black text-white"
+                    : "bg-white/15 text-white/60 cursor-not-allowed"
+                )}
+                disabled={verified || otpSent || !isComplete}
+                onClick={() => (!verified && !otpSent ? sendOtp() : null)}
+              >
+                {verified ? "Verified" : otpSent ? "OTP Sent" : "Verify"}
               </button>
             </div>
 
-            {/* OTP */}
-            <AnimatePresence>
-              {otpSent && !verified && (
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="mt-3">
-                  <p className="text-white/80 text-sm">Check WhatsApp — we just sent your 6-digit code.</p>
-                  <div className="mt-2 flex flex-col gap-2">
-                    <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest text-center" placeholder="●●●●●●" inputMode="numeric" maxLength={6} value={otp} onChange={(e)=>setOtp(e.target.value.replace(/\D/g,""))} aria-label="OTP code" />
-                    <button type="button" disabled={resendTimer > 0} onClick={()=>{ setOtp(""); setOtpSent(false); setTimeout(()=>{ setSending(true); setTimeout(()=>{ setSending(false); setOtpSent(true); setResendTimer(30); },800); },10); }} className={clsx("text-xs underline underline-offset-4 self-center", resendTimer>0 ? "text-white/40 cursor-not-allowed" : "text-white/80 hover:text-white")}>
-                      {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Didn't get the code? Resend"}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {otpSent && !verified && (
+              <div className="mt-3">
+                <input
+                  className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest text-center"
+                  placeholder="●●●●●●"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                />
+              </div>
+            )}
 
-            {/* Details */}
             <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
               <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Parent name" value={parent} onChange={(e)=>setParent(e.target.value)} />
               <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Child name (optional)" value={child} onChange={(e)=>setChild(e.target.value)} />
-              <div className="relative" ref={popRef}>
-                <button onClick={()=>setPlanOpen((v)=>!v)} className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-left">{plan ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find(x=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find(x=>x.id===plan)?.price}` : "Select plan"}</button>
-                <AnimatePresence>
-                  {planOpen && (
-                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
-                      {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt)=>(
-                        <button key={opt.id} onClick={()=>{ setPlan(opt.id); setPlanOpen(false); }} className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2">
-                          <span>{opt.name}</span><span className="text-white/75">{opt.price}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
               <div className="pt-2 flex gap-3">
                 <button className="flex-1 rounded-2xl bg-white text-gray-900 py-3 font-semibold">Get my free week</button>
               </div>
@@ -700,7 +663,8 @@ export default function App() {
 
   useEffect(() => {
     document.body.style.background = "transparent";
-    document.body.style.fontFamily = "-apple-system, SF Pro Text, Inter, ui-sans-serif, system-ui, Segoe UI, Roboto";
+    document.body.style.fontFamily =
+      '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, Segoe UI, Roboto';
     setIntent(intentFromQuery());
     const onScroll = () => setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
     window.addEventListener("scroll", onScroll);
@@ -710,24 +674,56 @@ export default function App() {
   return (
     <div className="text-white min-h-screen">
       <Backdrop />
-      <Header onPrimary={() => setShowSignup(true)} onDemo={() => setShowDemo(true)} showButtons={showHeaderButtons} />
+      <Header
+        onPrimary={() => setShowSignup(true)}
+        onDemo={() => setShowDemo(true)}
+        showButtons={showHeaderButtons}
+      />
 
       <main>
-        <Hero intent={intent} onPrimary={() => { setChosenPlan(null); setShowSignup(true); }} onDemo={() => setShowDemo(true)} />
+        <Hero
+          intent={intent}
+          onPrimary={() => {
+            setChosenPlan(null);
+            setShowSignup(true);
+          }}
+          onDemo={() => setShowDemo(true)}
+        />
         <TrustStrip />
         <How />
         <Reviews />
         <FAQ />
-        <Pricing onStart={(p) => { setChosenPlan(p); setShowSignup(true); }} />
+        <Pricing
+          onStart={(p) => {
+            setChosenPlan(p);
+            setShowSignup(true);
+          }}
+        />
       </main>
 
       <Footer />
 
-      <StickyMobileCTA intent={intent} onPrimary={() => setShowSignup(true)} onDemo={() => setShowDemo(true)} />
+      <StickyMobileCTA
+        intent={intent}
+        onPrimary={() => setShowSignup(true)}
+        onDemo={() => setShowDemo(true)}
+      />
 
       {/* Modals */}
-      <SignUpModal open={showSignup} onClose={() => setShowSignup(false)} defaultPlan={chosenPlan} />
-      <DemoModal open={showDemo} onClose={() => setShowDemo(false)} onStart={() => { setChosenPlan(null); setShowDemo(false); setShowSignup(true); }} />
+      <SignUpModal
+        open={showSignup}
+        onClose={() => setShowSignup(false)}
+        defaultPlan={chosenPlan}
+      />
+      <DemoModal
+        open={showDemo}
+        onClose={() => setShowDemo(false)}
+        onStart={() => {
+          setChosenPlan(null);
+          setShowDemo(false);
+          setShowSignup(true);
+        }}
+      />
     </div>
   );
 }
