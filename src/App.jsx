@@ -4,11 +4,11 @@ export default function Header() {
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
       <div className="flex items-center select-none">
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide mr-2">
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide mr-[10px]">
           KID
         </span>
-        <KidooseEyesLive />
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide ml-2">
+        <KidooseEyesLogo />
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide ml-[10px]">
           SE
         </span>
       </div>
@@ -16,25 +16,25 @@ export default function Header() {
   );
 }
 
-/* --------------------- 👀 Kidoose Eyes Logo --------------------- */
-
-function KidooseEyesLive() {
-  const EYE = 34;
-  const PUPIL = 14;
-  const GAP = 8;
+/* ----------------- 👁️ KIDOOSE Eyes Logo ----------------- */
+function KidooseEyesLogo() {
+  const EYE = 38; // match text height
+  const PUPIL = 16;
+  const GAP = 10; // equal gap for eyes and text
   const LIMIT = 6;
-  const SMOOTH = 0.15;
+  const SPEED = 0.2; // lower = faster tracking
+
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const wrapRef = useRef(null);
   const leftRef = useRef(null);
   const rightRef = useRef(null);
-  const eyelidsRef = useRef([]);
+  const lidsRef = useRef([]);
 
   const isTouch =
     typeof window !== "undefined" &&
     ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 
-  /* ---------------- Track mouse globally ---------------- */
+  /* 🖱️ Track mouse movement */
   useEffect(() => {
     if (isTouch) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
@@ -42,87 +42,77 @@ function KidooseEyesLive() {
     return () => window.removeEventListener("mousemove", handle);
   }, [isTouch]);
 
-  /* ---------------- Animate pupils ---------------- */
+  /* 🎯 Move pupils */
   useEffect(() => {
-    const current = { x: 0, y: 0 };
+    const pos = { x: 0, y: 0 };
     const idle = { x: 0, y: 0 };
 
     const tick = () => {
-      let targetX = 0;
-      let targetY = 0;
-
       const wrap = wrapRef.current;
       if (wrap) {
         const rect = wrap.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
+        let tx = 0, ty = 0;
 
-        if (!isTouch && mouse.x && mouse.y) {
+        if (!isTouch) {
           const dx = mouse.x - cx;
           const dy = mouse.y - cy;
           const len = Math.hypot(dx, dy) || 1;
+          tx = (dx / len) * LIMIT;
+          ty = (dy / len) * LIMIT;
 
-          // normalized direction
-          targetX = (dx / len) * LIMIT;
-          targetY = (dy / len) * LIMIT;
-
-          // 👀 if cursor between eyes → cross eyes slightly inward
-          const midLeft = rect.left + rect.width / 3;
-          const midRight = rect.right - rect.width / 3;
-          if (mouse.x > midLeft && mouse.x < midRight) {
-            targetX *= 1.3; // exaggerate inward
-          }
+          // cross eyes slightly when cursor in between
+          const midL = rect.left + rect.width / 3;
+          const midR = rect.right - rect.width / 3;
+          if (mouse.x > midL && mouse.x < midR) tx *= 1.2;
         } else {
-          // touch: idle wandering
-          targetX += idle.x;
-          targetY += idle.y;
+          // idle wandering on mobile
+          tx = idle.x;
+          ty = idle.y;
         }
+
+        pos.x += (tx - pos.x) * SPEED;
+        pos.y += (ty - pos.y) * SPEED;
+
+        [leftRef.current, rightRef.current].forEach((el) => {
+          if (el) el.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+        });
       }
-
-      current.x += (targetX - current.x) * SMOOTH;
-      current.y += (targetY - current.y) * SMOOTH;
-
-      [leftRef.current, rightRef.current].forEach((el) => {
-        if (el)
-          el.style.transform = `translate(${current.x}px, ${current.y}px)`;
-      });
-
       requestAnimationFrame(tick);
     };
     tick();
 
-    // Idle random movement on mobile
+    // mobile idle movement
     if (isTouch) {
       const interval = setInterval(() => {
         idle.x = (Math.random() - 0.5) * LIMIT * 2;
-        idle.y = (Math.random() - 0.5) * LIMIT * 2;
+        idle.y = Math.random() * 2; // mostly down
       }, 2500);
       return () => clearInterval(interval);
     }
   }, [mouse, isTouch]);
 
-  /* ---------------- Blink logic ---------------- */
+  /* 😴 Blink animation */
   useEffect(() => {
-    const lids = eyelidsRef.current;
-    const blink = (times = 1, delay = 0) => {
-      setTimeout(() => {
-        for (let i = 0; i < times; i++) {
-          setTimeout(() => {
-            lids.forEach((lid) => {
-              if (!lid) return;
-              lid.style.transform = "scaleY(0.05)";
-              setTimeout(() => {
-                lid.style.transform = "scaleY(1)";
-              }, 120);
-            });
-          }, i * 220);
-        }
-      }, delay);
+    const lids = lidsRef.current;
+    const blink = (times = 1) => {
+      for (let i = 0; i < times; i++) {
+        setTimeout(() => {
+          lids.forEach((lid) => {
+            if (!lid) return;
+            lid.style.transform = "scaleY(0.1)";
+            setTimeout(() => {
+              lid.style.transform = "scaleY(1)";
+            }, 120);
+          });
+        }, i * 220);
+      }
     };
 
     const loop = () => {
-      const delay = 2000 + Math.random() * 4000;
       blink(Math.random() > 0.8 ? 2 : 1);
+      const delay = 2500 + Math.random() * 3000;
       setTimeout(loop, delay);
     };
     loop();
@@ -138,37 +128,38 @@ function KidooseEyesLive() {
         size={EYE}
         pupil={PUPIL}
         refPupil={leftRef}
-        refLid={(el) => (eyelidsRef.current[0] = el)}
+        refLid={(el) => (lidsRef.current[0] = el)}
       />
       <div style={{ width: GAP }} />
       <Eye
         size={EYE}
         pupil={PUPIL}
         refPupil={rightRef}
-        refLid={(el) => (eyelidsRef.current[1] = el)}
+        refLid={(el) => (lidsRef.current[1] = el)}
       />
     </div>
   );
 }
 
-/* --------------------- Eye component --------------------- */
+/* ----------------- Eye Component ----------------- */
 function Eye({ size, pupil, refPupil, refLid }) {
   return (
     <div
-      className="relative rounded-full overflow-hidden bg-[#FEFEFE] shadow-inner flex items-center justify-center"
+      className="relative rounded-full overflow-hidden bg-[#FEFEFE] flex items-center justify-center"
       style={{
         width: size,
         height: size,
-        border: "2px solid rgba(255,255,255,0.7)",
+        border: "2px solid rgba(255,255,255,0.6)",
+        boxShadow: "inset 0 -2px 0 rgba(0,0,0,0.05)",
       }}
     >
-      {/* Eyelid (animated scaleY) */}
+      {/* eyelid */}
       <div
         ref={refLid}
         className="absolute inset-0 bg-[#FEFEFE] origin-top transition-transform duration-150 ease-in-out"
       />
 
-      {/* Pupil */}
+      {/* pupil */}
       <div
         ref={refPupil}
         className="absolute rounded-full"
@@ -180,7 +171,7 @@ function Eye({ size, pupil, refPupil, refLid }) {
         }}
       />
 
-      {/* Highlight */}
+      {/* highlight */}
       <div
         className="absolute rounded-full bg-white"
         style={{
