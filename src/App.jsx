@@ -1,4 +1,4 @@
-// App.jsx — KIDOOSE site with WhatsApp Dark iPhone Screenshot Clone (no phone frame)
+// App.jsx — KIDOOSE Cinematic Site with WhatsApp Dark iPhone Chat (typing → msg1 → typing → msg2)
 // Tech: React 18, TailwindCSS, framer-motion, clsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -37,7 +37,6 @@ const COUNTRY_FORMATS = {
   DZ: { dial: "+213", mask: "-- --- ----",   max: 9 },
   DEFAULT: { dial: "+1", mask: "------------", max: 12 },
 };
-
 const isoToFlagEmoji = (iso2) =>
   iso2
     ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt()))
@@ -52,7 +51,6 @@ const intentFromQuery = () => {
   if (raw.includes("morning")) return "morning";
   return "default";
 };
-
 const COPY = {
   bedtime: {
     h1: "Bedtime stories that make nights easier — starting tonight.",
@@ -177,14 +175,14 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
 );
 
 /* ===========================================================
-   WHATSAPP DARK iPHONE SCREENSHOT (no phone frame, top-rounded)
+   WHATSAPP DARK iPHONE CHAT (no phone frame) — ANIMATED
    =========================================================== */
 
 const WA = {
   bgTop: "#0B141A",
   bg: "#111B21",
   header: "#202C33",
-  incoming: "#202C33", // iOS dark incoming
+  incoming: "#202C33",     // iOS dark incoming
   meta: "#8696A0",
   name: "#E9EDEF",
   online: "#6BEB7A",
@@ -193,7 +191,7 @@ const WA = {
   inputFill: "#2A3942",
 };
 
-// light wallpaper SVG tile (subtle)
+// WhatsApp dark wallpaper tile (very subtle)
 const WALLPAPER = encodeURIComponent(`
 <svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'>
   <g fill='none' stroke='white' stroke-opacity='0.06' stroke-width='2'>
@@ -204,7 +202,7 @@ const WALLPAPER = encodeURIComponent(`
   </g>
 </svg>`);
 
-// Icons (inline, iOS-like)
+// Thin-outline icons approximating iOS SF Symbols
 const Icon = {
   Back: (p)=>(<svg width="22" height="22" viewBox="0 0 24 24" {...p}><path d="M15.5 19.5L8 12l7.5-7.5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>),
   Video: (p)=>(<svg width="20" height="20" viewBox="0 0 24 24" {...p}><path d="M15 8l5-3v14l-5-3v2H3V6h12v2z" fill="currentColor"/></svg>),
@@ -215,50 +213,179 @@ const Icon = {
   Send: (p)=>(<svg width="22" height="22" viewBox="0 0 24 24" {...p}><path d="M3 20l18-8L3 4l3 7-3 9zm3-9.8l9.7 1.8-9.7 1.8 1.7-3.6z" fill="currentColor"/></svg>),
 };
 
-// Single-direction chat (Kidoose only)
-const WhatsAppScreenshot = () => {
+// Typing indicator (3 animated dots)
+const Typing = () => (
+  <div className="flex items-center gap-1">
+    {Array.from({ length: 3 }).map((_, i) => (
+      <motion.span
+        key={i}
+        className="w-2 h-2 rounded-full"
+        style={{ background: "#AEBAC1" }}
+        animate={{ y: [0, -2, 0], opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut", delay: i * 0.15 }}
+      />
+    ))}
+  </div>
+);
+
+// Animated WhatsApp Chat (no phone frame)
+const WhatsAppChatAnimated = () => {
+  // stages: typing1 -> msg1 -> typing2 -> msg2
+  const [stage, setStage] = useState("typing1");
+
+  useEffect(() => {
+    // timeline
+    if (stage === "typing1") {
+      const t = setTimeout(() => setStage("msg1"), 1300);
+      return () => clearTimeout(t);
+    }
+    if (stage === "msg1") {
+      const t = setTimeout(() => setStage("typing2"), 900);
+      return () => clearTimeout(t);
+    }
+    if (stage === "typing2") {
+      const t = setTimeout(() => setStage("msg2"), 1400);
+      return () => clearTimeout(t);
+    }
+  }, [stage]);
+
   const messages = [
-    { text: "🌞 Morning Play: Build a paper airplane — one-minute race!", time: "08:59" },
-    { text: "🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers…”", time: "19:00" },
+    {
+      text:
+        "🌞 Morning Play: Build a paper airplane together — time a one-minute race! Bonus: decorate wings with stickers.",
+      time: "08:59",
+    },
+    {
+      text:
+        "🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers… one for calm toes, two for quiet breaths.”",
+      time: "19:00",
+    },
   ];
 
   return (
     <div
-      className="mx-auto w-[360px] sm:w-[390px] rounded-t-[28px] overflow-hidden shadow-2xl"
+      className="mx-auto w-[360px] sm:w-[390px] rounded-t-[30px] overflow-hidden shadow-2xl select-none"
       style={{
         background: `linear-gradient(180deg, ${WA.bgTop}, ${WA.bg}),
           url("data:image/svg+xml,${WALLPAPER}")`,
         backgroundRepeat: "repeat",
         backgroundSize: "512px 512px",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, ui-sans-serif, system-ui, Segoe UI, Roboto',
       }}
+      aria-label="WhatsApp conversation mockup"
     >
       {/* Header */}
-      <div className="h-12" style={{ background: WA.header, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="h-12 flex items-center gap-2 px-3 text-white select-none">
-          <span className="text-[${WA.icon}] text-white/70"><Icon.Back color={WA.icon} /></span>
-          <div className="w-7 h-7 rounded-full bg-[#2A3942] border border-white/10" />
+      <div
+        className="h-14"
+        style={{
+          background: WA.header,
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <div className="h-14 flex items-center gap-2 px-3 text-white">
+          <span style={{ color: WA.icon }}><Icon.Back color={WA.icon} /></span>
+          <div className="w-8 h-8 rounded-full bg-[#2A3942] border border-white/10" />
           <div className="flex-1 leading-tight">
-            <div className="text-[14px] font-semibold" style={{ color: WA.name }}>Kidoose</div>
-            <div className="text-[11px]" style={{ color: WA.online }}>online</div>
+            <div className="text-[14px] font-semibold" style={{ color: WA.name }}>
+              Kidoose
+            </div>
+            <div className="text-[12px]" style={{ color: WA.online }}>
+              online
+            </div>
           </div>
           <span style={{ color: WA.icon }}><Icon.Video color={WA.icon} /></span>
           <span className="ml-2" style={{ color: WA.icon }}><Icon.Phone color={WA.icon} /></span>
         </div>
       </div>
 
-      {/* Messages (incoming only) */}
-      <div className="px-2 py-3 space-y-2" style={{ minHeight: 380 }}>
-        {messages.map((m, i) => (
-          <div key={i} className="w-full flex items-start">
-            <div
-              className="max-w-[84%] px-[10px] py-[7px] rounded-[18px] rounded-tl-[6px] border border-black/25"
-              style={{ background: WA.incoming }}
+      {/* Messages area */}
+      <div className="px-2 py-3 space-y-1.5" style={{ minHeight: 360 }}>
+        {/* Typing 1 */}
+        <AnimatePresence>
+          {stage === "typing1" && (
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              className="w-full flex items-start"
             >
-              <div className="text-[14px] leading-[1.35] text-white/95">{m.text}</div>
-              <div className="text-right text-[10px] mt-1" style={{ color: WA.meta }}>{m.time}</div>
-            </div>
-          </div>
-        ))}
+              <div
+                className="max-w-[86%] px-[10px] py-[7px] rounded-[18px] rounded-tl-[6px] border border-black/25"
+                style={{ background: WA.incoming }}
+              >
+                <Typing />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Message 1 */}
+        <AnimatePresence>
+          {(stage === "msg1" || stage === "typing2" || stage === "msg2") && (
+            <motion.div
+              initial={{ opacity: 0, x: -18, filter: "blur(2px)" }}
+              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+              transition={{ type: "spring", stiffness: 240, damping: 24 }}
+              className="w-full flex items-start"
+            >
+              <div
+                className="max-w-[86%] px-[10px] py-[7px] rounded-[18px] rounded-tl-[6px] border border-black/25"
+                style={{ background: WA.incoming }}
+              >
+                <div className="text-[14px] leading-[1.35]" style={{ color: "#E9EDEF" }}>
+                  {messages[0].text}
+                </div>
+                <div className="text-right text-[10px] mt-[2px]" style={{ color: WA.meta }}>
+                  {messages[0].time}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Typing 2 */}
+        <AnimatePresence>
+          {stage === "typing2" && (
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              className="w-full flex items-start"
+            >
+              <div
+                className="max-w-[86%] px-[10px] py-[7px] rounded-[18px] rounded-tl-[6px] border border-black/25"
+                style={{ background: WA.incoming }}
+              >
+                <Typing />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Message 2 */}
+        <AnimatePresence>
+          {stage === "msg2" && (
+            <motion.div
+              initial={{ opacity: 0, x: -18, filter: "blur(2px)" }}
+              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+              transition={{ type: "spring", stiffness: 240, damping: 24 }}
+              className="w-full flex items-start"
+            >
+              <div
+                className="max-w-[86%] px-[10px] py-[7px] rounded-[18px] rounded-tl-[6px] border border-black/25"
+                style={{ background: WA.incoming }}
+              >
+                <div className="text-[14px] leading-[1.35]" style={{ color: "#E9EDEF" }}>
+                  {messages[1].text}
+                </div>
+                <div className="text-right text-[10px] mt-[2px]" style={{ color: WA.meta }}>
+                  {messages[1].time}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Composer */}
@@ -266,7 +393,7 @@ const WhatsAppScreenshot = () => {
         <div className="flex items-center gap-2 text-white/80">
           <span style={{ color: WA.icon }}><Icon.Attach color={WA.icon} /></span>
           <div
-            className="flex-1 rounded-full px-4 py-2 text-[14px]"
+            className="flex-1 rounded-full px-4 py-2 text-[15px]"
             style={{ background: WA.inputFill, color: "#AEBAC1", border: "1px solid rgba(255,255,255,0.08)" }}
           >
             Message
@@ -321,8 +448,8 @@ const Hero = ({ onPrimary, onDemo, intent }) => {
         <p className="mt-4 text-white/75 italic">No charge until day 8 · Cancel anytime</p>
 
         <div className="mt-8">
-          {/* WhatsApp Dark Screenshot (no frame) */}
-          <WhatsAppScreenshot />
+          {/* WhatsApp Dark Animated (no frame) */}
+          <WhatsAppChatAnimated />
         </div>
       </div>
     </section>
@@ -425,7 +552,6 @@ const QA = [
   ["Do I need an app?", "No. We use WhatsApp only — simple and familiar."],
   ["Privacy?", "Messages are for parents, not the child. We keep it minimal and respectful."],
 ];
-
 const FAQ = () => (
   <section className="py-12 text-white">
     <div className="max-w-3xl mx-auto px-6">
@@ -442,7 +568,7 @@ const FAQ = () => (
   </section>
 );
 
-/* ---------------- Demo Modal (reuses screenshot) ---------------- */
+/* ---------------- Demo Modal (reuses animated chat) ---------------- */
 const DemoModal = ({ open, onClose, onStart }) => (
   <AnimatePresence>
     {open && (
@@ -471,7 +597,7 @@ const DemoModal = ({ open, onClose, onStart }) => (
           </button>
 
           <div className="mx-auto grid place-items-center">
-            <WhatsAppScreenshot />
+            <WhatsAppChatAnimated />
           </div>
 
           <div className="mt-4 md:mt-6 flex justify-center">
@@ -488,47 +614,25 @@ const DemoModal = ({ open, onClose, onStart }) => (
   </AnimatePresence>
 );
 
-/* ---------------- Signup (masked phone + OTP + resend link) ---------------- */
-const SignUpModal = ({ open, onClose, defaultPlan }) => {
+/* ---------------- Signup (masked phone + OTP minimal) ---------------- */
+const SignUpModal = ({ open, onClose }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
 
   const fmtBase = COUNTRY_FORMATS[countryCode] || COUNTRY_FORMATS.DEFAULT;
-  theFmt: {
-  }
   const fmt = { dial: fmtBase.dial || dialCode || "+1", mask: fmtBase.mask, max: fmtBase.max };
   const dialDigits = fmt.dial.replace(/\D/g, "");
 
   const [phone, setPhone] = useState("");
-  const [parent, setParent] = useState("");
-  const [child, setChild] = useState("");
-  const [planOpen, setPlanOpen] = useState(false);
-  const [plan, setPlan] = useState(defaultPlan?.id ?? "");
   const [sending, setSending] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
-  const popRef = useRef(null);
 
   useEffect(() => {
     if (!open) {
-      setPhone(""); setParent(""); setChild(""); setPlanOpen(false);
-      setPlan(defaultPlan?.id ?? ""); setSending(false); setOtpSent(false);
-      setOtp(""); setVerified(false); setResendTimer(0);
+      setPhone(""); setSending(false); setOtpSent(false); setOtp(""); setVerified(false);
     }
-  }, [open, defaultPlan]);
-
-  useEffect(() => {
-    const handler = (e) => { if (popRef.current && !popRef.current.contains(e.target)) setPlanOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  useEffect(() => {
-    if (!otpSent || resendTimer <= 0) return;
-    const id = setInterval(() => setResendTimer((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(id);
-  }, [otpSent, resendTimer]);
+  }, [open]);
 
   const formatLocal = (allDigits) => {
     let local = allDigits.startsWith(dialDigits) ? allDigits.slice(dialDigits.length) : allDigits;
@@ -554,7 +658,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     if (!isComplete || sending || verified || otpSent) return;
     setSending(true);
     setOtp("");
-    setTimeout(() => { setSending(false); setOtpSent(true); }, 1200);
+    setTimeout(() => { setSending(false); setOtpSent(true); }, 1000);
   };
 
   useEffect(() => {
@@ -613,11 +717,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
             )}
 
             <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
-              <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Parent name" value={parent} onChange={(e)=>setParent(e.target.value)} />
-              <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Child name (optional)" value={child} onChange={(e)=>setChild(e.target.value)} />
-              <div className="pt-2 flex gap-3">
-                <button className="flex-1 rounded-2xl bg-white text-gray-900 py-3 font-semibold">Get my free week</button>
-              </div>
+              <button className="w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold">Get my free week</button>
               <p className="text-white/60 text-xs">By continuing, you agree to receive messages on WhatsApp. You can stop anytime.</p>
             </div>
           </motion.div>
@@ -657,7 +757,6 @@ const StickyMobileCTA = ({ onPrimary, onDemo, intent }) => {
 export default function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
-  const [chosenPlan, setChosenPlan] = useState(null);
   const [showHeaderButtons, setShowHeaderButtons] = useState(false);
   const [intent, setIntent] = useState("default");
 
@@ -683,22 +782,14 @@ export default function App() {
       <main>
         <Hero
           intent={intent}
-          onPrimary={() => {
-            setChosenPlan(null);
-            setShowSignup(true);
-          }}
+          onPrimary={() => setShowSignup(true)}
           onDemo={() => setShowDemo(true)}
         />
         <TrustStrip />
         <How />
         <Reviews />
         <FAQ />
-        <Pricing
-          onStart={(p) => {
-            setChosenPlan(p);
-            setShowSignup(true);
-          }}
-        />
+        <Pricing onStart={() => setShowSignup(true)} />
       </main>
 
       <Footer />
@@ -710,16 +801,11 @@ export default function App() {
       />
 
       {/* Modals */}
-      <SignUpModal
-        open={showSignup}
-        onClose={() => setShowSignup(false)}
-        defaultPlan={chosenPlan}
-      />
+      <SignUpModal open={showSignup} onClose={() => setShowSignup(false)} />
       <DemoModal
         open={showDemo}
         onClose={() => setShowDemo(false)}
         onStart={() => {
-          setChosenPlan(null);
           setShowDemo(false);
           setShowSignup(true);
         }}
