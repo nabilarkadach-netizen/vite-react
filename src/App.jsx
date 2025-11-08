@@ -1,5 +1,8 @@
-// App.jsx — KIDOOSE Cinematic Build (Full A→Z Signup Flow, Demo Modal, OTP + Resend Timer, Pricing UX)
-// Requirements: React 18, Tailwind, framer-motion, clsx
+// App.jsx — KIDOOSE Conversion Edition
+// Tech: React 18, TailwindCSS, framer-motion, clsx
+// Features: Intent-matched hero, WhatsApp-like samples, Trust strip, FAQ, Reviews, Pricing,
+//           Full OTP signup flow w/ phone masking by IP + resend link (30s), Scroll-aware header,
+//           Sticky mobile CTA, Clean/no-gimmick visuals.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,41 +13,76 @@ const PAL = {
   nightTop: "#0E1624",
   nightMid: "#16253B",
   nightBot: "#1B2D4D",
-  auroraA: "#8BA7FF",
-  auroraB: "#F5C16E",
   ink: "#12151B",
 };
 
-/* ---------------- Country & Dial Helpers ---------------- */
+/* ---------------- Country & Dial Helpers (dash placeholders) ---------------- */
 const COUNTRY_FORMATS = {
-  US: { dial: "+1", mask: "___ ___ ____", max: 10 },
-  CA: { dial: "+1", mask: "___ ___ ____", max: 10 },
-  GB: { dial: "+44", mask: "____ ______", max: 10 },
-  AU: { dial: "+61", mask: "___ ___ ___", max: 9 },
-  NZ: { dial: "+64", mask: "___ ___ ____", max: 9 },
-  IE: { dial: "+353", mask: "__ ___ ____", max: 9 },
-  SG: { dial: "+65", mask: "____ ____", max: 8 },
-  IN: { dial: "+91", mask: "_____ _____", max: 10 },
+  US: { dial: "+1",   mask: "--- --- ----",  max: 10 },
+  CA: { dial: "+1",   mask: "--- --- ----",  max: 10 },
+  GB: { dial: "+44",  mask: "---- ------",   max: 10 },
+  AU: { dial: "+61",  mask: "--- --- ---",   max: 9 },
+  NZ: { dial: "+64",  mask: "--- --- ----",  max: 9 },
+  IE: { dial: "+353", mask: "-- --- ----",   max: 9 },
+  SG: { dial: "+65",  mask: "---- ----",     max: 8 },
+  IN: { dial: "+91",  mask: "----- -----",   max: 10 },
   // MENA focus
-  TR: { dial: "+90", mask: "___ ___ ____", max: 10 },
-  AE: { dial: "+971", mask: "__ ___ ____", max: 9 },
-  SA: { dial: "+966", mask: "__ ___ ____", max: 9 },
-  EG: { dial: "+20", mask: "___ ___ ____", max: 9 },
-  KW: { dial: "+965", mask: "___ ____", max: 8 },
-  QA: { dial: "+974", mask: "____ ____", max: 8 },
-  BH: { dial: "+973", mask: "____ ____", max: 8 },
-  OM: { dial: "+968", mask: "____ ____", max: 8 },
-  JO: { dial: "+962", mask: "__ ______", max: 9 },
-  LB: { dial: "+961", mask: "__ ___ ___", max: 8 },
-  MA: { dial: "+212", mask: "__ ___ ____", max: 9 },
-  DZ: { dial: "+213", mask: "__ ___ ____", max: 9 },
-  DEFAULT: { dial: "+1", mask: "____________", max: 12 },
+  TR: { dial: "+90",  mask: "--- --- ----",  max: 10 },
+  AE: { dial: "+971", mask: "-- --- ----",   max: 9 },
+  SA: { dial: "+966", mask: "-- --- ----",   max: 9 },
+  EG: { dial: "+20",  mask: "--- --- ----",  max: 9 },
+  KW: { dial: "+965", mask: "--- ----",      max: 8 },
+  QA: { dial: "+974", mask: "---- ----",     max: 8 },
+  BH: { dial: "+973", mask: "---- ----",     max: 8 },
+  OM: { dial: "+968", mask: "---- ----",     max: 8 },
+  JO: { dial: "+962", mask: "-- ------",     max: 9 },
+  LB: { dial: "+961", mask: "-- --- ---",    max: 8 },
+  MA: { dial: "+212", mask: "-- --- ----",   max: 9 },
+  DZ: { dial: "+213", mask: "-- --- ----",   max: 9 },
+  DEFAULT: { dial: "+1", mask: "------------", max: 12 },
 };
 
 const isoToFlagEmoji = (iso2) =>
   iso2
     ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt()))
     : "🌍";
+
+/* ---------------- Intent from URL ---------------- */
+const intentFromQuery = () => {
+  const params = new URLSearchParams(window.location.search);
+  const raw = (params.get("utm_term") || params.get("q") || "").toLowerCase();
+  if (raw.includes("bedtime")) return "bedtime";
+  if (raw.includes("activity") || raw.includes("activities") || raw.includes("kids activities")) return "activities";
+  if (raw.includes("morning")) return "morning";
+  return "default";
+};
+
+const COPY = {
+  bedtime: {
+    h1: "Bedtime stories that make nights easier — starting tonight.",
+    sub: "Delivered on WhatsApp at 7pm in your timezone. No app. Cancel anytime.",
+    primary: "See tonight’s sample",
+    secondary: "Start free week",
+  },
+  activities: {
+    h1: "2–5 minute morning play ideas using what you already have.",
+    sub: "WhatsApp at 9am & 7pm. No app. Cancel anytime.",
+    primary: "See today’s activity",
+    secondary: "Start free week",
+  },
+  morning: {
+    h1: "Quick, joyful morning sparks for calmer school runs.",
+    sub: "We’ll WhatsApp you at 9am & 7pm. No app. Cancel anytime.",
+    primary: "See a morning spark",
+    secondary: "Start free week",
+  },
+  default: {
+    h1: "Turn 7 minutes a day into rituals your child will remember.",
+    sub: "Every morning: a play idea. Every night: a short calming story. On WhatsApp.",
+    primary: "See today’s sample",
+    secondary: "Start free week",
+  },
+};
 
 /* ---------------- Hook: Detect Country Dial Code ---------------- */
 const useCountryDialCode = () => {
@@ -82,17 +120,12 @@ const Backdrop = () => {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
-    let t = 0,
-      raf;
+    let t = 0, raf;
     const tick = () => {
       t += 0.003;
       el.style.background = `
-        radial-gradient(1200px 800px at ${15 + 5 * Math.sin(t)}% ${
-        -10 + 6 * Math.cos(t * 0.8)
-      }%, rgba(245,193,110,0.20), transparent 55%),
-        radial-gradient(1100px 900px at ${85 + 4 * Math.cos(t * 0.7)}% ${
-        110 + 5 * Math.sin(t)
-      }%, rgba(139,167,255,0.22), transparent 58%),
+        radial-gradient(1200px 800px at ${15 + 5 * Math.sin(t)}% ${-10 + 6 * Math.cos(t * 0.8)}%, rgba(245,193,110,0.20), transparent 55%),
+        radial-gradient(1100px 900px at ${85 + 4 * Math.cos(t * 0.7)}% ${110 + 5 * Math.sin(t)}%, rgba(139,167,255,0.22), transparent 58%),
         linear-gradient(180deg, ${PAL.nightTop}, ${PAL.nightMid} 50%, ${PAL.nightBot})
       `;
       el.style.filter = `brightness(${1 + 0.02 * Math.sin(t)})`;
@@ -163,7 +196,7 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
   </header>
 );
 
-/* ---------------- WhatsApp Demo ---------------- */
+/* ---------------- WhatsApp Demo (beige bubbles) ---------------- */
 const WhatsAppDemo = () => {
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -175,24 +208,21 @@ const WhatsAppDemo = () => {
     return () => timers.forEach(clearTimeout);
   }, []);
   return (
-    <div className="relative w-full max-w-[360px] mx-auto rounded-2xl overflow-hidden shadow-2xl border border-black/40 bg-[#111B21]">
-      <div className="bg-[#202C33] text-white px-4 py-2 flex items-center gap-2">
-        <div className="w-2 h-2 bg-white/70 rounded-full animate-pulse" />
+    <div className="relative w-full max-w-[360px] mx-auto rounded-2xl overflow-hidden shadow-2xl border border-black/40 bg-[#ECE5DD]">
+      <div className="bg-[#E5DDD5] text-[#111] px-4 py-2 flex items-center gap-2">
+        <div className="w-2 h-2 bg-black/40 rounded-full" />
         <span className="font-semibold">Kidoose</span>
       </div>
-      <div
-        className="p-3 min-h-[360px]"
-        style={{ background: "linear-gradient(180deg, rgba(17,27,33,1) 0%, rgba(32,44,51,1) 100%)" }}
-      >
+      <div className="p-3 min-h-[260px]">
         {step >= 2 && (
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="max-w-[80%] bg-[#1F6A57] text-white rounded-2xl shadow px-3 py-2"
+            className="max-w-[85%] bg-[#FFF] text-[#111] rounded-2xl shadow px-3 py-2 border border-black/10"
           >
-            🌞 Morning Play: Build a paper airplane together — race one minute!
-            <div className="text-[10px] text-white/70 text-right mt-1">09:00</div>
+            🌞 Morning Play: Build a paper airplane together — one-minute race!
+            <div className="text-[10px] text-black/50 text-right mt-1">09:00</div>
           </motion.div>
         )}
         {step >= 3 && (
@@ -200,10 +230,10 @@ const WhatsAppDemo = () => {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="max-w-[80%] bg-[#1F6A57] text-white rounded-2xl shadow px-3 py-2 mt-3"
+            className="max-w-[85%] bg-[#FFF] text-[#111] rounded-2xl shadow px-3 py-2 mt-3 border border-black/10"
           >
-            🌙 Bedtime: Once upon a sleepy moon… a cozy tale for sweet dreams.
-            <div className="text-[10px] text-white/70 text-right mt-1">18:00</div>
+            🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers…” …
+            <div className="text-[10px] text-black/50 text-right mt-1">19:00</div>
           </motion.div>
         )}
       </div>
@@ -211,46 +241,80 @@ const WhatsAppDemo = () => {
   );
 };
 
-/* ---------------- Hero ---------------- */
-const Hero = ({ onPrimary, onDemo }) => (
-  <section className="text-white text-center pt-16 md:pt-20 pb-10 px-6">
-    <div className="max-w-4xl mx-auto">
-      <p className="text-white/70 text-sm md:text-base">From two parents who wanted calmer days.</p>
-      <h1 className="mt-2 text-4xl md:text-6xl font-extrabold leading-tight">
-        Turn{" "}
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8BA7FF] to-[#F5C16E]">
-          7 minutes a day
-        </span>{" "}
-        into rituals your child will remember.
-      </h1>
-      <p className="mt-5 text-white/85 text-lg leading-relaxed">
-        Every morning: a playful idea. Every night: a calming story.{" "}
-        <span className="underline underline-offset-4">Delivered on WhatsApp</span> — no app to install.
-      </p>
-
-      <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-        <button
-          onClick={onPrimary}
-          className="rounded-2xl bg-white text-gray-900 px-6 py-3 font-semibold shadow hover:shadow-md w-full sm:w-auto"
-        >
-          Start your free week
-        </button>
-        <button
-          onClick={onDemo}
-          className="rounded-2xl border border-white/25 bg-white/5 text-white px-6 py-3 font-semibold hover:bg-white/10 w-full sm:w-auto"
-        >
-          Play sample
-        </button>
-      </div>
-
-      <p className="mt-4 text-white/75 italic">No charge until day 8 · Cancel anytime</p>
-
-      <div className="mt-8">
-        <WhatsAppDemo />
+/* ---------------- Trust Strip ---------------- */
+const TrustStrip = () => (
+  <section className="py-6 md:py-8">
+    <div className="mx-auto max-w-6xl px-6 text-white/85">
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          "Built by two parents after our own bedtime battles.",
+          "WhatsApp only · No new app · Cancel anytime.",
+          "97% stay after the free week.",
+        ].map((t) => (
+          <div key={t} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+            ✓ {t}
+          </div>
+        ))}
       </div>
     </div>
   </section>
 );
+
+/* ---------------- Inline Samples Panel ---------------- */
+const SamplePanel = ({ intent }) => {
+  const showBedtime = intent === "bedtime" || intent === "default";
+  const showMorning = intent === "activities" || intent === "morning" || intent === "default";
+  return (
+    <div className="mt-6 grid gap-3">
+      {showMorning && (
+        <div className="rounded-2xl px-4 py-3 text-[15px]" style={{ background: "#E7DBC8", color: "#111B21" }}>
+          🌞 Morning Play: Sock-ball bowling — 3 rolled socks, 6 cups as pins. 2 minutes. Go!
+        </div>
+      )}
+      {showBedtime && (
+        <div className="rounded-2xl px-4 py-3 text-[15px]" style={{ background: "#E7DBC8", color: "#111B21" }}>
+          🌙 Bedtime: “Nora tucked the day into a tiny pocket and listened to the quiet…” …
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ---------------- Hero ---------------- */
+const Hero = ({ onPrimary, onDemo, intent }) => {
+  const hero = COPY[intent] || COPY.default;
+  return (
+    <section className="text-white text-center pt-16 md:pt-20 pb-10 px-6">
+      <div className="max-w-4xl mx-auto">
+        <p className="text-white/70 text-sm md:text-base">From two parents who wanted calmer days.</p>
+        <h1 className="mt-2 text-4xl md:text-6xl font-extrabold leading-tight">{hero.h1}</h1>
+        <p className="mt-5 text-white/85 text-lg leading-relaxed">{hero.sub}</p>
+
+        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <button
+            onClick={onDemo}
+            className="rounded-2xl border border-white/25 bg-white/5 text-white px-6 py-3 font-semibold hover:bg-white/10 w-full sm:w-auto"
+          >
+            {hero.primary}
+          </button>
+          <button
+            onClick={onPrimary}
+            className="rounded-2xl bg-white text-gray-900 px-6 py-3 font-semibold shadow hover:shadow-md w-full sm:w-auto"
+          >
+            {hero.secondary}
+          </button>
+        </div>
+
+        <p className="mt-4 text-white/75 italic">No charge until day 8 · Cancel anytime</p>
+
+        <div className="mt-8">
+          <WhatsAppDemo />
+          <SamplePanel intent={intent} />
+        </div>
+      </div>
+    </section>
+  );
+};
 
 /* ---------------- How ---------------- */
 const How = () => (
@@ -266,7 +330,7 @@ const How = () => (
         ].map((c) => (
           <div
             key={c.title}
-            className="rounded-2xl border border-white/12 bg-white/6 backdrop-blur-lg p-6 text-left shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+            className="rounded-2xl border border-white/12 bg:white/6 bg-white/5 backdrop-blur-lg p-6 text-left shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
           >
             <div className="text-2xl">{c.icon}</div>
             <h3 className="mt-2 text-xl font-semibold text-white">{c.title}</h3>
@@ -310,7 +374,7 @@ const Reviews = () => {
   );
 };
 
-/* ---------------- Pricing (centered head/CTA, left-aligned bullets) ---------------- */
+/* ---------------- Pricing ---------------- */
 const Pricing = ({ onStart }) => {
   const plans = useMemo(
     () => [
@@ -360,7 +424,7 @@ const Pricing = ({ onStart }) => {
               className={clsx(
                 "relative rounded-3xl border p-6 text-left sm:text-center shadow-[0_15px_40px_rgba(0,0,0,0.35)] transition duration-300 hover:shadow-[0_20px_60px_rgba(0,0,0,0.45)]",
                 p.popular
-                  ? "border-white/15 bg-gradient-to-br from-[#F5C16E]/90 via-[#D5C0F7]/70 to-[#8BA7FF]/90"
+                  ? "border-white/15 bg-gradient-to-br from-[#8BA7FF]/90 via-[#D5C0F7]/70 to-[#F5C16E]/90"
                   : "border-white/12 bg-white/6 backdrop-blur-lg"
               )}
               onClick={() => onStart(p)}
@@ -372,7 +436,6 @@ const Pricing = ({ onStart }) => {
                 </div>
               )}
 
-              {/* Centered name/tag/price */}
               <div className="sm:text-center">
                 <h3 className={clsx("text-2xl font-semibold", p.popular && "text-[#12151B]")}>{p.name}</h3>
                 <p className={clsx("text-sm mt-1 italic", p.popular ? "text-[#12151B]/80" : "text-white/70")}>
@@ -383,7 +446,6 @@ const Pricing = ({ onStart }) => {
                 </div>
               </div>
 
-              {/* Left-aligned bullet list, centered block */}
               <ul className={clsx("mt-4 space-y-2 text-left mx-auto max-w-[22rem]", p.popular ? "text-[#12151B]" : "text-white/90")}>
                 {p.features.map((f) => (
                   <li key={f} className="flex gap-2 items-start justify-start">
@@ -424,6 +486,32 @@ const Pricing = ({ onStart }) => {
     </section>
   );
 };
+
+/* ---------------- FAQ (native <details>) ---------------- */
+const QA = [
+  ["What do I get daily?", "Two WhatsApp messages: a tiny morning play idea and a short calming bedtime story."],
+  ["When do you send?", "Default 9am & 7pm local time (you can adjust after you start)."],
+  ["How do I cancel?", "Reply STOP any time or use the toggle in the first message."],
+  ["Is this for multiple kids?", "Yes. Family/Premium include sibling tweaks and gentle variations."],
+  ["Do I need an app?", "No. We use WhatsApp only — simple and familiar."],
+  ["Privacy?", "Messages are for parents, not the child. We keep it minimal and respectful."],
+];
+
+const FAQ = () => (
+  <section className="py-12 text-white">
+    <div className="max-w-3xl mx-auto px-6">
+      <h3 className="text-2xl font-extrabold mb-4">Common questions</h3>
+      <div className="space-y-2">
+        {QA.map(([q, a]) => (
+          <details key={q} className="group rounded-xl border border-white/15 bg-white/5 p-4">
+            <summary className="cursor-pointer font-semibold">{q}</summary>
+            <p className="mt-2 text-white/80">{a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+);
 
 /* ---------------- Demo Modal ---------------- */
 const DemoModal = ({ open, onClose, onStart }) => (
@@ -473,7 +561,7 @@ const DemoModal = ({ open, onClose, onStart }) => (
   </AnimatePresence>
 );
 
-/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer) ---------------- */
+/* ---------------- Signup (masked phone + OTP + resend link) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
 
@@ -491,10 +579,9 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
   const [step, setStep] = useState(1);
-  const [resendTimer, setResendTimer] = useState(0); // seconds until resend enabled
+  const [resendTimer, setResendTimer] = useState(0);
   const popRef = useRef(null);
 
-  // reset on close
   useEffect(() => {
     if (!open) {
       setPhone("");
@@ -511,7 +598,6 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     }
   }, [open, defaultPlan]);
 
-  // click outside plan popup
   useEffect(() => {
     const handler = (e) => {
       if (popRef.current && !popRef.current.contains(e.target)) setPlanOpen(false);
@@ -520,18 +606,17 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // resend countdown
   useEffect(() => {
     if (!otpSent || resendTimer <= 0) return;
     const id = setInterval(() => setResendTimer((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(id);
   }, [otpSent, resendTimer]);
 
-  // formatting helpers
   const formatLocal = (allDigits) => {
     let local = allDigits.startsWith(dialDigits) ? allDigits.slice(dialDigits.length) : allDigits;
     local = local.slice(0, fmt.max);
-    let out = fmt.mask;
+    // build underscores equivalent to mask (keeping dashes)
+    let out = fmt.mask.replace(/[0-9]/g, "_");
     for (const d of local) out = out.replace("_", d);
     return out.split("_")[0].trim();
   };
@@ -556,7 +641,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
       setSending(false);
       setOtpSent(true);
       setStep(2);
-      setResendTimer(30); // start countdown
+      setResendTimer(30);
     }, 1200);
   };
 
@@ -567,19 +652,12 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     }
   };
 
-  // auto-verify at 6 digits
   useEffect(() => {
     if (otpSent && !verified && otp.trim().length === 6) {
       setVerified(true);
       setStep(3);
     }
   }, [otp, otpSent, verified]);
-
-  const planList = [
-    { id: "starter", name: "Starter", price: "$4.99/mo" },
-    { id: "family", name: "Family", price: "$7.99/mo" },
-    { id: "premium", name: "Premium", price: "$11.99/mo" },
-  ];
 
   return (
     <AnimatePresence>
@@ -637,7 +715,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
               </div>
             </div>
 
-            {/* Phone input with verify button */}
+            {/* Phone input + Verify */}
             <div className="relative mt-5 w-full">
               <input
                 id="phone-input"
@@ -658,7 +736,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                   }
                 }}
                 onKeyDown={onEnter}
-                disabled={verified} // editable until verified
+                disabled={verified}
                 aria-label="Phone number"
               />
 
@@ -709,9 +787,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                   exit={{ opacity: 0, y: 6 }}
                   className="mt-3"
                 >
-                  <p className="text-white/80 text-sm">
-                    Check WhatsApp — we just sent your 6-digit code.
-                  </p>
+                  <p className="text-white/80 text-sm">Check WhatsApp — we just sent your 6-digit code.</p>
                   <div className="mt-2 flex flex-col gap-2">
                     <input
                       className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest text-center"
@@ -727,10 +803,8 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                       type="button"
                       disabled={resendTimer > 0}
                       onClick={() => {
-                        // Resend only via this link (not the main button)
                         setOtp("");
                         setOtpSent(false);
-                        // restart send
                         setTimeout(() => {
                           setSending(true);
                           setTimeout(() => {
@@ -753,12 +827,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
             </AnimatePresence>
 
             {/* Details (unlocked after verified) */}
-            <div
-              className={clsx(
-                "mt-4 space-y-3 transition duration-500",
-                !verified && "blur-sm pointer-events-none opacity-60"
-              )}
-            >
+            <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
               <input
                 className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
                 placeholder="Parent name"
@@ -847,26 +916,30 @@ const Footer = () => (
 );
 
 /* ---------------- Sticky Mobile CTA ---------------- */
-const StickyMobileCTA = ({ onPrimary, onDemo }) => (
-  <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-    <div className="mx-auto max-w-6xl">
-      <div className="m-3 rounded-2xl border border-white/15 bg-black/60 backdrop-blur-lg p-2 flex items-center gap-2">
-        <button
-          onClick={onDemo}
-          className="flex-1 rounded-xl border border-white/25 bg-white/5 text-white px-3 py-2 font-semibold"
-        >
-          Sample
-        </button>
-        <button
-          onClick={onPrimary}
-          className="flex-1 rounded-xl bg-white text-gray-900 px-3 py-2 font-semibold"
-        >
-          Free week
-        </button>
+const StickyMobileCTA = ({ onPrimary, onDemo, intent }) => {
+  const label = (i) =>
+    i === "bedtime" ? "Tonight’s story" : i === "activities" || i === "morning" ? "Today’s activity" : "Sample";
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
+      <div className="mx-auto max-w-6xl">
+        <div className="m-3 rounded-2xl border border-white/15 bg-black/60 backdrop-blur-lg p-2 flex items-center gap-2">
+          <button
+            onClick={onDemo}
+            className="flex-1 rounded-xl border border-white/25 bg-white/5 text-white px-3 py-2 font-semibold"
+          >
+            {label(intent)}
+          </button>
+          <button
+            onClick={onPrimary}
+            className="flex-1 rounded-xl bg-white text-gray-900 px-3 py-2 font-semibold"
+          >
+            Free week
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ---------------- App Root ---------------- */
 export default function App() {
@@ -874,15 +947,13 @@ export default function App() {
   const [showDemo, setShowDemo] = useState(false);
   const [chosenPlan, setChosenPlan] = useState(null);
   const [showHeaderButtons, setShowHeaderButtons] = useState(false);
+  const [intent, setIntent] = useState("default");
 
   useEffect(() => {
     document.body.style.background = "transparent";
-    document.body.style.fontFamily =
-      "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
-
-    const onScroll = () => {
-      setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
-    };
+    document.body.style.fontFamily = "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+    setIntent(intentFromQuery());
+    const onScroll = () => setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -898,14 +969,17 @@ export default function App() {
 
       <main>
         <Hero
+          intent={intent}
           onPrimary={() => {
             setChosenPlan(null);
             setShowSignup(true);
           }}
           onDemo={() => setShowDemo(true)}
         />
+        <TrustStrip />
         <How />
         <Reviews />
+        <FAQ />
         <Pricing
           onStart={(p) => {
             setChosenPlan(p);
@@ -918,6 +992,7 @@ export default function App() {
 
       {/* Sticky CTA on mobile */}
       <StickyMobileCTA
+        intent={intent}
         onPrimary={() => setShowSignup(true)}
         onDemo={() => setShowDemo(true)}
       />
