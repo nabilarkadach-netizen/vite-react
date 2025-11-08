@@ -1,48 +1,44 @@
-import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function Header() {
-  const GAP_PX = 6;
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
-      <div className="flex items-center select-none" style={{ columnGap: `${GAP_PX}px` }}>
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">KID</span>
-        <CuteEyes gap={GAP_PX} />
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">SE</span>
+      <div className="flex items-center select-none gap-2">
+        <span className="text-white font-extrabold text-3xl md:text-4xl">KID</span>
+        <CuteEyes />
+        <span className="text-white font-extrabold text-3xl md:text-4xl">SE</span>
       </div>
     </header>
   );
 }
 
-/* -------------------- Eyes -------------------- */
-function CuteEyes({ gap }) {
-  const EYE = 27;
-  const PUPIL = Math.round(EYE * 0.38);
-  const GAP = gap - 2;
-  const LIMIT = Math.round(EYE * 0.2);
-
+function CuteEyes() {
+  const EYE = 26;
+  const PUPIL = 10;
+  const GAP = 6;
+  const LIMIT = 6;
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const leftWrap = useRef(null);
   const rightWrap = useRef(null);
   const leftPupil = useRef(null);
   const rightPupil = useRef(null);
-  const leftAPI = useRef(null);
-  const rightAPI = useRef(null);
 
+  // track mouse
   useEffect(() => {
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", handle);
     return () => window.removeEventListener("mousemove", handle);
   }, []);
 
-  // pupil motion
+  // pupil move
   useEffect(() => {
     let raf;
     const move = () => {
-      const moveEye = (wrap, pupil) => {
+      const moveOne = (wrap, pupil) => {
         if (!wrap || !pupil) return;
-        const r = wrap.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
+        const rect = wrap.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
         const dx = mouse.x - cx;
         const dy = mouse.y - cy;
         const len = Math.hypot(dx, dy) || 1;
@@ -50,90 +46,55 @@ function CuteEyes({ gap }) {
         const ny = (dy / len) * LIMIT;
         pupil.style.transform = `translate(${nx}px, ${ny}px)`;
       };
-      moveEye(leftWrap.current, leftPupil.current);
-      moveEye(rightWrap.current, rightPupil.current);
+      moveOne(leftWrap.current, leftPupil.current);
+      moveOne(rightWrap.current, rightPupil.current);
       raf = requestAnimationFrame(move);
     };
     move();
     return () => cancelAnimationFrame(raf);
   }, [mouse]);
 
-  // random blink loop
-  useEffect(() => {
-    let t;
-    const blinkLoop = () => {
-      const delay = 1800 + Math.random() * 1500;
-      t = setTimeout(() => {
-        leftAPI.current?.blink();
-        rightAPI.current?.blink();
-        blinkLoop();
-      }, delay);
-    };
-    blinkLoop();
-    return () => clearTimeout(t);
-  }, []);
-
   return (
-    <div className="relative flex items-center justify-center" style={{ height: EYE }}>
-      <Eye size={EYE} pupil={PUPIL} wrapRef={leftWrap} pupilRef={leftPupil} apiRef={leftAPI} />
+    <div className="flex items-center justify-center" style={{ height: EYE }}>
+      <Eye size={EYE} pupil={PUPIL} pupilRef={leftPupil} wrapRef={leftWrap} />
       <div style={{ width: GAP }} />
-      <Eye size={EYE} pupil={PUPIL} wrapRef={rightWrap} pupilRef={rightPupil} apiRef={rightAPI} />
+      <Eye size={EYE} pupil={PUPIL} pupilRef={rightPupil} wrapRef={rightWrap} />
     </div>
   );
 }
 
-/* -------------------- Eye -------------------- */
-const Eye = forwardRef(function Eye({ size, pupil, wrapRef, pupilRef, apiRef }, ref) {
-  const lidRef = useRef(1);
-  const [lidValue, setLidValue] = useState(1);
+function Eye({ size, pupil, wrapRef, pupilRef }) {
+  const [blink, setBlink] = useState(false);
 
-  // Smooth eyelid interpolator
+  // random blinking loop
   useEffect(() => {
-    let raf;
-    const animate = () => {
-      setLidValue((v) => {
-        const target = lidRef.current;
-        const next = v + (target - v) * 0.25; // smooth lerp
-        return Math.abs(next - target) < 0.001 ? target : next;
-      });
-      raf = requestAnimationFrame(animate);
+    const loop = () => {
+      const delay = 2000 + Math.random() * 2000;
+      setTimeout(() => {
+        setBlink(true);
+        setTimeout(() => setBlink(false), 150); // open after 150ms
+        loop();
+      }, delay);
     };
-    animate();
-    return () => cancelAnimationFrame(raf);
+    loop();
   }, []);
-
-  useImperativeHandle(apiRef, () => ({
-    blink: () => {
-      lidRef.current = 0.05; // close
-      setTimeout(() => (lidRef.current = 1), 150); // open
-    },
-  }));
 
   return (
     <div
       ref={wrapRef}
-      className="relative rounded-full overflow-hidden flex items-center justify-center"
+      className="relative rounded-full flex items-center justify-center overflow-hidden"
       style={{
         width: size,
         height: size,
         background:
-          "radial-gradient(circle at 50% 55%, #FFFFFF 0%, #F2F2F2 85%, #E8E8E8 100%)",
-        boxShadow:
-          "inset 0 -2px 1px rgba(0,0,0,0.08), 0 2px 3px rgba(0,0,0,0.15)",
+          "radial-gradient(circle at 50% 55%, #fff 0%, #eee 85%, #ddd 100%)",
+        boxShadow: "inset 0 -2px 2px rgba(0,0,0,0.1)",
       }}
     >
-      {/* eyelid */}
-      <div
-        className="absolute inset-0 origin-top pointer-events-none"
-        style={{
-          transform: `scaleY(${lidValue})`,
-          background: lidValue < 0.99 ? "white" : "transparent",
-        }}
-      />
       {/* pupil */}
       <div
         ref={pupilRef}
-        className="absolute rounded-full will-change-transform flex items-center justify-center"
+        className="absolute rounded-full flex items-center justify-center"
         style={{
           width: pupil,
           height: pupil,
@@ -154,6 +115,22 @@ const Eye = forwardRef(function Eye({ size, pupil, wrapRef, pupilRef, apiRef }, 
           }}
         />
       </div>
+
+      {/* eyelid */}
+      <div
+        className="absolute inset-0 rounded-full bg-[#e6d4be]"
+        style={{
+          transform: blink ? "translateY(0%)" : "translateY(-100%)",
+          transition: "transform 0.12s ease-in-out",
+        }}
+      />
+      <div
+        className="absolute inset-0 rounded-full bg-[#e6d4be]"
+        style={{
+          transform: blink ? "translateY(0%)" : "translateY(100%)",
+          transition: "transform 0.12s ease-in-out",
+        }}
+      />
     </div>
   );
-});
+}
