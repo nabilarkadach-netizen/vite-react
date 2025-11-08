@@ -1,38 +1,35 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 
 export default function Header() {
-  const GAP_PX = 6; // spacing between KID ↔ eyes ↔ SE
+  const GAP_PX = 6; // uniform spacing between letters and eyes
 
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
-      <div
-        className="flex items-center select-none"
-        style={{ columnGap: `${GAP_PX}px` }}
-      >
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">
-          KID
-        </span>
+      <div className="flex items-center select-none" style={{ columnGap: `${GAP_PX}px` }}>
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">KID</span>
         <CuteEyes gap={GAP_PX} />
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">
-          SE
-        </span>
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">SE</span>
       </div>
     </header>
   );
 }
 
-/* -------------------- Eyes -------------------- */
+/* -------------------- Eyes (independent tracking + random blinking) -------------------- */
 function CuteEyes({ gap }) {
   const EYE = 27;
   const PUPIL = Math.round(EYE * 0.38);
-  const GAP = gap - 2;
-  const LIMIT = Math.round(EYE * 0.2);
+  const GAP = gap - 2;                  // slightly tighter between eyes
+  const LIMIT = Math.round(EYE * 0.2);  // max pupil travel
 
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const leftWrap = useRef(null);
   const rightWrap = useRef(null);
-  const leftRef = useRef(null);
-  const rightRef = useRef(null);
+  const leftPupil = useRef(null);
+  const rightPupil = useRef(null);
+
+  // APIs to trigger blinks inside each Eye
+  const leftAPI = useRef(null);
+  const rightAPI = useRef(null);
 
   // Track mouse globally
   useEffect(() => {
@@ -41,8 +38,9 @@ function CuteEyes({ gap }) {
     return () => window.removeEventListener("mousemove", handle);
   }, []);
 
-  // Independent tracking for each eye
+  // Independent tracking per eye
   useEffect(() => {
+    let raf;
     const move = () => {
       const updateEye = (wrap, pupil) => {
         if (!wrap || !pupil) return;
@@ -57,26 +55,98 @@ function CuteEyes({ gap }) {
         pupil.style.transform = `translate(${nx}px, ${ny}px)`;
       };
 
-      updateEye(leftWrap.current, leftRef.current);
-      updateEye(rightWrap.current, rightRef.current);
+      updateEye(leftWrap.current, leftPupil.current);
+      updateEye(rightWrap.current, rightPupil.current);
 
-      requestAnimationFrame(move);
+      raf = requestAnimationFrame(move);
     };
     move();
+    return () => cancelAnimationFrame(raf);
   }, [mouse, LIMIT]);
+
+  // Random blinking scheduler (natural feel)
+  useEffect(() => {
+    let t1, t2, t3;
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    const schedule = () => {
+      // Next blink in 1.8s–3.2s
+      t1 = setTimeout(() => {
+        const r = Math.random();
+
+        // 0–0.75: both eyes blink together (most common)
+        if (r < 0.75) {
+          leftAPI.current?.blink();
+          rightAPI.current?.blink();
+        }
+        // 0.75–0.9: single-eye blink (left or right)
+        else if (r < 0.9) {
+          (Math.random() < 0.5 ? leftAPI : rightAPI).current?.blink();
+        }
+        // 0.9–1: double-blink (both, twice)
+        else {
+          leftAPI.current?.blink();
+          rightAPI.current?.blink();
+          t2 = setTimeout(() => {
+            leftAPI.current?.blink();
+            rightAPI.current?.blink();
+          }, 160); // short delay between the two blinks
+        }
+
+        // schedule next cycle
+        schedule();
+      }, rand(1800, 3200));
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    };
+
+    const cleanup = schedule();
+    return cleanup;
+  }, []);
 
   return (
     <div className="relative flex items-center justify-center" style={{ height: EYE }}>
-      <Eye size={EYE} pupil={PUPIL} wrapRef={leftWrap} refPupil={leftRef} />
+      <Eye
+        size={EYE}
+        pupil={PUPIL}
+        wrapRef={leftWrap}
+        pupilRef={leftPupil}
+        apiRef={leftAPI}
+      />
       <div style={{ width: GAP }} />
-      <Eye size={EYE} pupil={PUPIL} wrapRef={rightWrap} refPupil={rightRef} />
-      <style>{blinkCSS}</style>
+      <Eye
+        size={EYE}
+        pupil={PUPIL}
+        wrapRef={rightWrap}
+        pupilRef={rightPupil}
+        apiRef={rightAPI}
+      />
     </div>
   );
 }
 
 /* -------------------- Single Eye -------------------- */
-function Eye({ size, pupil, wrapRef, refPupil }) {
+const Eye = forwardRef(function EyeComponent(
+  { size, pupil, wrapRef, pupilRef, apiRef },
+) {
+  const lidRef = useRef(null);
+  const [lidScale, setLidScale] = useState(1);
+
+  // expose a blink() method to parent
+  useImperativeHandle(apiRef, () => ({
+    blink: () => {
+      // close
+      setLidScale(0.06);
+      // reopen shortly after (natural fast blink)
+      setTimeout(() => setLidScale(1), 120);
+    },
+  }));
+
   return (
     <div
       ref={wrapRef}
@@ -91,12 +161,20 @@ function Eye({ size, pupil, wrapRef, refPupil }) {
       }}
       aria-label="KIDOOSE eye"
     >
-      {/* eyelid (blinking) */}
-      <div className="absolute inset-0 origin-top animate-kid-blink bg-white/0 pointer-events-none" />
-
-      {/* pupil (moves) */}
+      {/* Eyelid (animated by scaleY) */}
       <div
-        ref={refPupil}
+        ref={lidRef}
+        className="absolute inset-0 origin-top pointer-events-none"
+        style={{
+          transform: `scaleY(${lidScale})`,
+          transition: "transform 120ms cubic-bezier(.4,0,.2,1)",
+          background: lidScale < 1 ? "rgba(255,255,255,1)" : "transparent",
+        }}
+      />
+
+      {/* Pupil (moves) with glossy highlight attached */}
+      <div
+        ref={pupilRef}
         className="absolute rounded-full will-change-transform flex items-center justify-center"
         style={{
           width: pupil,
@@ -105,7 +183,6 @@ function Eye({ size, pupil, wrapRef, refPupil }) {
             "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
         }}
       >
-        {/* glossy highlight — moves with pupil */}
         <div
           className="absolute rounded-full"
           style={{
@@ -121,16 +198,4 @@ function Eye({ size, pupil, wrapRef, refPupil }) {
       </div>
     </div>
   );
-}
-
-/* -------------------- Blink Animation -------------------- */
-const blinkCSS = `
-@keyframes kid-blink-frames {
-  0%, 92%, 100% { transform: scaleY(1); background: rgba(255,255,255,0); }
-  94% { transform: scaleY(0.05); background: rgba(255,255,255,1); }
-  96% { transform: scaleY(1); background: rgba(255,255,255,0); }
-}
-.animate-kid-blink {
-  animation: kid-blink-frames 4.6s cubic-bezier(.4,.0,.2,1) infinite;
-}
-`;
+});
