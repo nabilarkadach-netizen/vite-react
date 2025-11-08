@@ -4,11 +4,11 @@ export default function Header() {
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
       <div className="flex items-center select-none">
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide mr-2">
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide mr-[10px]">
           KID
         </span>
         <CuteEyes />
-        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide ml-2">
+        <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide ml-[10px]">
           SE
         </span>
       </div>
@@ -18,44 +18,101 @@ export default function Header() {
 
 /* -------------------- Eyes -------------------- */
 function CuteEyes() {
-  const EYE = 30; // outer diameter
-  const PUPIL = 12;
-  const GAP = 8;
-  const LIMIT = 6; // max pupil travel
+  const EYE = 36;      // outer diameter (matches text)
+  const PUPIL = 13;    // pupil size
+  const GAP = 10;      // consistent spacing
+  const LIMIT = 7;     // max pupil travel
+
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const wrapRef = useRef(null);
   const leftRef = useRef(null);
   const rightRef = useRef(null);
+  const eyelidRefs = useRef([]);
 
-  // track mouse globally
+  const isTouch =
+    typeof window !== "undefined" &&
+    ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
+  /* Track mouse on desktop */
   useEffect(() => {
+    if (isTouch) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", handle);
     return () => window.removeEventListener("mousemove", handle);
-  }, []);
+  }, [isTouch]);
 
-  // update pupils relative to wrapper center
+  /* Move pupils smoothly */
   useEffect(() => {
-    const update = () => {
-      if (!wrapRef.current) return;
-      const rect = wrapRef.current.getBoundingClientRect();
+    const current = { x: 0, y: 0 };
+    const idle = { x: 0, y: 0 };
+    const SPEED = 0.25; // swift
+
+    const move = () => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      const rect = wrap.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      const dx = mouse.x - cx;
-      const dy = mouse.y - cy;
-      const len = Math.hypot(dx, dy) || 1;
-      const nx = (dx / len) * LIMIT;
-      const ny = (dy / len) * LIMIT;
+
+      let tx = 0, ty = 0;
+      if (!isTouch && mouse.x && mouse.y) {
+        const dx = mouse.x - cx;
+        const dy = mouse.y - cy;
+        const len = Math.hypot(dx, dy) || 1;
+        tx = (dx / len) * LIMIT;
+        ty = (dy / len) * LIMIT;
+      } else {
+        // mobile idle wander
+        tx = idle.x;
+        ty = idle.y;
+      }
+
+      current.x += (tx - current.x) * SPEED;
+      current.y += (ty - current.y) * SPEED;
 
       [leftRef.current, rightRef.current].forEach((el) => {
-        if (el)
-          el.style.transform = `translate(${nx}px, ${ny}px)`;
+        if (el) el.style.transform = `translate(${current.x}px, ${current.y}px)`;
       });
 
-      requestAnimationFrame(update);
+      requestAnimationFrame(move);
     };
-    update();
-  }, [mouse]);
+    move();
+
+    if (isTouch) {
+      const interval = setInterval(() => {
+        idle.x = (Math.random() - 0.5) * LIMIT * 2;
+        idle.y = Math.random() * 3; // mostly down
+      }, 2500);
+      return () => clearInterval(interval);
+    }
+  }, [mouse, isTouch]);
+
+  /* Blinking logic */
+  useEffect(() => {
+    const lids = eyelidRefs.current;
+    const blink = (times = 1) => {
+      for (let i = 0; i < times; i++) {
+        setTimeout(() => {
+          lids.forEach((lid) => {
+            if (!lid) return;
+            lid.style.transform = "scaleY(0.05)";
+            lid.style.background = "#fff";
+            setTimeout(() => {
+              lid.style.transform = "scaleY(1)";
+              lid.style.background = "transparent";
+            }, 140);
+          });
+        }, i * 220);
+      }
+    };
+
+    const loop = () => {
+      blink(Math.random() > 0.8 ? 2 : 1);
+      const delay = 2500 + Math.random() * 3000;
+      setTimeout(loop, delay);
+    };
+    loop();
+  }, []);
 
   return (
     <div
@@ -63,28 +120,46 @@ function CuteEyes() {
       className="relative flex items-center justify-center"
       style={{ width: EYE * 2 + GAP, height: EYE }}
     >
-      <Eye size={EYE} pupil={PUPIL} refPupil={leftRef} />
+      <Eye
+        size={EYE}
+        pupil={PUPIL}
+        refPupil={leftRef}
+        refLid={(el) => (eyelidRefs.current[0] = el)}
+      />
       <div style={{ width: GAP }} />
-      <Eye size={EYE} pupil={PUPIL} refPupil={rightRef} />
-      <style>{blinkCSS}</style>
+      <Eye
+        size={EYE}
+        pupil={PUPIL}
+        refPupil={rightRef}
+        refLid={(el) => (eyelidRefs.current[1] = el)}
+      />
     </div>
   );
 }
 
-function Eye({ size, pupil, refPupil }) {
+/* -------------------- Single Eye -------------------- */
+function Eye({ size, pupil, refPupil, refLid }) {
   return (
     <div
       className="relative rounded-full overflow-hidden bg-white flex items-center justify-center"
       style={{
         width: size,
         height: size,
+        border: "2px solid rgba(255,255,255,0.7)",
         boxShadow: "inset 0 -2px 0 rgba(0,0,0,0.05)",
       }}
     >
-      <div className="absolute inset-0 origin-top animate-kid-blink bg-white/0 pointer-events-none" />
+      {/* Eyelid (blinks via transform scaleY) */}
+      <div
+        ref={refLid}
+        className="absolute inset-0 origin-top transition-transform duration-150 ease-in-out"
+        style={{ background: "transparent" }}
+      />
+
+      {/* Pupil */}
       <div
         ref={refPupil}
-        className="absolute rounded-full will-change-transform"
+        className="absolute rounded-full"
         style={{
           width: pupil,
           height: pupil,
@@ -92,6 +167,8 @@ function Eye({ size, pupil, refPupil }) {
             "radial-gradient(circle at 35% 35%, #111 0%, #222 60%, #000 100%)",
         }}
       />
+
+      {/* Shine highlight */}
       <div
         className="absolute rounded-full bg-white"
         style={{
@@ -105,14 +182,3 @@ function Eye({ size, pupil, refPupil }) {
     </div>
   );
 }
-
-const blinkCSS = `
-@keyframes kid-blink-frames {
-  0%, 92%, 100% { transform: scaleY(1); background: rgba(255,255,255,0); }
-  94% { transform: scaleY(0.05); background: rgba(255,255,255,1); }
-  96% { transform: scaleY(1); background: rgba(255,255,255,0); }
-}
-.animate-kid-blink {
-  animation: kid-blink-frames 4.6s cubic-bezier(.4,.0,.2,1) infinite;
-}
-`;
