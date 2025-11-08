@@ -18,19 +18,20 @@ function CuteEyes() {
   const GAP = 6;
   const LIMIT = 6;
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [blink, setBlink] = useState(false);
   const leftWrap = useRef(null);
   const rightWrap = useRef(null);
   const leftPupil = useRef(null);
   const rightPupil = useRef(null);
 
-  // track mouse
+  // track mouse movement
   useEffect(() => {
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", handle);
     return () => window.removeEventListener("mousemove", handle);
   }, []);
 
-  // pupil move
+  // pupils follow mouse
   useEffect(() => {
     let raf;
     const move = () => {
@@ -54,31 +55,29 @@ function CuteEyes() {
     return () => cancelAnimationFrame(raf);
   }, [mouse]);
 
-  return (
-    <div className="flex items-center justify-center" style={{ height: EYE }}>
-      <Eye size={EYE} pupil={PUPIL} pupilRef={leftPupil} wrapRef={leftWrap} />
-      <div style={{ width: GAP }} />
-      <Eye size={EYE} pupil={PUPIL} pupilRef={rightPupil} wrapRef={rightWrap} />
-    </div>
-  );
-}
-
-function Eye({ size, pupil, wrapRef, pupilRef }) {
-  const [blink, setBlink] = useState(false);
-
-  // random blinking loop
+  // synchronized blinking loop
   useEffect(() => {
     const loop = () => {
-      const delay = 2000 + Math.random() * 2000;
+      const delay = 2000 + Math.random() * 1200;
       setTimeout(() => {
         setBlink(true);
-        setTimeout(() => setBlink(false), 150); // open after 150ms
+        setTimeout(() => setBlink(false), 150); // open
         loop();
       }, delay);
     };
     loop();
   }, []);
 
+  return (
+    <div className="flex items-center justify-center" style={{ height: EYE }}>
+      <Eye size={EYE} pupil={PUPIL} pupilRef={leftPupil} wrapRef={leftWrap} blink={blink} />
+      <div style={{ width: GAP }} />
+      <Eye size={EYE} pupil={PUPIL} pupilRef={rightPupil} wrapRef={rightWrap} blink={blink} />
+    </div>
+  );
+}
+
+function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
   return (
     <div
       ref={wrapRef}
@@ -116,16 +115,38 @@ function Eye({ size, pupil, wrapRef, pupilRef }) {
         />
       </div>
 
-      {/* eyelid */}
+      {/* top eyelid */}
       <div
-        className="absolute inset-0 rounded-full bg-[#e6d4be]"
+        className="absolute inset-0 rounded-full bg-gradient-to-b from-[#e4c6a3] to-[#d5b085]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(-100%)",
           transition: "transform 0.12s ease-in-out",
         }}
-      />
+      >
+        {/* eyelashes */}
+        {blink && (
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 flex gap-1"
+            style={{ marginTop: "1px" }}
+          >
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-black"
+                style={{
+                  width: 2,
+                  height: 6,
+                  transform: `rotate(${(i - 2) * 12}deg)`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* bottom eyelid */}
       <div
-        className="absolute inset-0 rounded-full bg-[#e6d4be]"
+        className="absolute inset-0 rounded-full bg-gradient-to-t from-[#e4c6a3] to-[#d5b085]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(100%)",
           transition: "transform 0.12s ease-in-out",
