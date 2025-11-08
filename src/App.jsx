@@ -1,8 +1,8 @@
-// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Scroll-to-Top Orb)
+// App.jsx — KIDOOSE USA Edition (Cinematic + Trust-tuned + Confetti Burst + Exit-Intent Sample)
 // Requirements: React 18, Tailwind, framer-motion, clsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import clsx from "clsx";
 
 /* ---------------- Theme ---------------- */
@@ -41,9 +41,7 @@ const COUNTRY_FORMATS = {
 };
 
 const isoToFlagEmoji = (iso2) =>
-  iso2
-    ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt()))
-    : "🌍";
+  iso2 ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt())) : "🌍";
 
 /* ---------------- Hook: Detect Country Dial Code (locked to USA for launch) ---------------- */
 const useCountryDialCode = () => {
@@ -74,7 +72,7 @@ const useCountryDialCode = () => {
   return { dialCode, countryCode, flag };
 };
 
-/* ---------------- Animated Background ---------------- */
+/* ---------------- Animated Backdrop (cinematic, lightweight) ---------------- */
 const Backdrop = () => {
   const ref = useRef(null);
   useEffect(() => {
@@ -84,8 +82,8 @@ const Backdrop = () => {
     const tick = () => {
       t += 0.003;
       el.style.background = `
-        radial-gradient(1200px 800px at ${15 + 5 * Math.sin(t)}% ${-10 + 6 * Math.cos(t * 0.8)}%, rgba(245,193,110,0.20), transparent 55%),
-        radial-gradient(1100px 900px at ${85 + 4 * Math.cos(t * 0.7)}% ${110 + 5 * Math.sin(t)}%, rgba(139,167,255,0.22), transparent 58%),
+        radial-gradient(1100px 800px at ${15 + 5 * Math.sin(t)}% ${-8 + 6 * Math.cos(t * 0.8)}%, rgba(245,193,110,0.18), transparent 55%),
+        radial-gradient(1000px 900px at ${85 + 4 * Math.cos(t * 0.7)}% ${110 + 5 * Math.sin(t)}%, rgba(139,167,255,0.2), transparent 58%),
         linear-gradient(180deg, ${PAL.nightTop}, ${PAL.nightMid} 50%, ${PAL.nightBot})
       `;
       el.style.filter = `brightness(${1 + 0.02 * Math.sin(t)})`;
@@ -129,6 +127,7 @@ const LocalGreeting = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
       className="text-center text-white/80 text-sm md:text-base pt-4"
+      aria-live="polite"
     >
       {greeting}! It’s {timeString} in New York — tonight’s story is ready for you 🇺🇸
     </motion.div>
@@ -203,14 +202,14 @@ const Clock = ({ time }) => (
   <span className="text-white text-[13px] font-[500] tracking-tight leading-none">{time}</span>
 );
 const SignalIcon = () => (
-  <svg width="22" height="11" viewBox="0 0 22 11" className="text-white">
+  <svg width="22" height="11" viewBox="0 0 22 11" className="text-white" aria-hidden>
     {[7, 5, 3, 1, 0].map((y, i) => (
       <rect key={i} x={i * 5} y={y} width="2" height={11 - y} rx="0.5" fill="currentColor" />
     ))}
   </svg>
 );
 const WifiIcon = () => (
-  <svg width="20" height="14" viewBox="0 0 20 14" fill="none" className="text-white">
+  <svg width="20" height="14" viewBox="0 0 20 14" fill="none" className="text-white" aria-hidden>
     <path
       d="M10 12.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm-4-3.5a6 6 0 018 0M3 5a10 10 0 0114 0"
       stroke="currentColor"
@@ -222,7 +221,7 @@ const WifiIcon = () => (
   </svg>
 );
 const BatteryIcon = ({ level = 0.8 }) => (
-  <svg width="27" height="13" viewBox="0 0 27 13" fill="none" className="text-white">
+  <svg width="27" height="13" viewBox="0 0 27 13" fill="none" className="text-white" aria-hidden>
     <rect x="1" y="2" width="22" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
     <rect x="24" y="4" width="2" height="5" rx="1" fill="currentColor" />
     <rect x="2.5" y="3.5" width={20 * level} height="6" rx="1" fill="currentColor" opacity="0.9" />
@@ -232,40 +231,40 @@ const BatteryIcon = ({ level = 0.8 }) => (
 /* ---------- Icons ---------- */
 const Icon = {
   Back: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2.3" strokeLinecap="round" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2.3" strokeLinecap="round" className="w-5 h-5" aria-hidden>
       <path d="M15 18l-6-6 6-6" />
     </svg>
   ),
   Video: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5" aria-hidden>
       <path d="M23 7l-7 5 7 5V7z" />
       <rect x="1" y="5" width="15" height="14" rx="2" />
     </svg>
   ),
   Phone: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5" aria-hidden>
       <path d="M22 16.9v3a2 2 0 01-2.2 2 19.9 19.9 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.9 19.9 0 012.1 4a2 2 0 012-2h3a2 2 0 012 1.7c.1.9.4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.8.7a2 2 0 011.7 2z" />
     </svg>
   ),
   Plus: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2.2" strokeLinecap="round" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2.2" strokeLinecap="round" className="w-5 h-5" aria-hidden>
       <path d="M12 5v14M5 12h14" />
     </svg>
   ),
   Camera: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5" aria-hidden>
       <path d="M23 19a4 4 0 01-4 4H5a4 4 0 01-4-4V9a4 4 0 014-4h3l2-3h4l2 3h3a4 4 0 014 4v10z" />
       <circle cx="12" cy="14" r="4" />
     </svg>
   ),
   Mic: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5" aria-hidden>
       <path d="M12 1a3 3 0 00-3 3v7a3 3 0 006 0V4a3 3 0 00-3-3z" />
       <path d="M19 10a7 7 0 01-14 0M12 17v6" />
     </svg>
   ),
   Send: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" className="w-5 h-5" aria-hidden>
       <path d="M22 2L11 13" />
       <path d="M22 2l-7 20-4-9-9-4 20-7z" />
     </svg>
@@ -298,6 +297,52 @@ const useIosClock = () => {
   return time;
 };
 
+/* ---------- Confetti Burst (lightweight, framer-motion only) ---------- */
+const ConfettiBurst = ({ trigger }) => {
+  const [seed, setSeed] = useState(0);
+  useEffect(() => {
+    if (trigger) {
+      setSeed((s) => s + 1);
+    }
+  }, [trigger]);
+  const pieces = useMemo(() => Array.from({ length: 24 }, (_, i) => i), [seed]);
+
+  return (
+    <AnimatePresence>
+      {trigger && (
+        <motion.div
+          key={`confetti-${seed}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+          aria-hidden
+        >
+          {pieces.map((i) => {
+            const x = 50 + (Math.random() * 40 - 20);
+            const rot = Math.random() * 180 - 90;
+            const dur = 0.9 + Math.random() * 0.5;
+            const delay = Math.random() * 0.1;
+            const size = 6 + Math.random() * 6;
+            const colors = ["#83A3FF", "#F5C16E", "#EAF0FF", "#5E7AFF", "#FFA131"];
+            const bg = colors[i % colors.length];
+            return (
+              <motion.span
+                key={i}
+                className="absolute rounded"
+                style={{ width: size, height: size, background: bg, left: `${x}%`, top: "40%" }}
+                initial={{ y: 0, opacity: 1, rotate: 0 }}
+                animate={{ y: 180 + Math.random() * 120, opacity: 0, rotate: rot }}
+                transition={{ duration: dur, ease: "ease-out", delay }}
+              />
+            );
+          })}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 /* ---------- WhatsAppDemo (typing → msg1 → typing → msg2) ---------- */
 const WhatsAppDemo = () => {
   const time = useIosClock();
@@ -306,10 +351,10 @@ const WhatsAppDemo = () => {
 
   useEffect(() => {
     const seq = [
-      setTimeout(() => setStage(0), 500),
-      setTimeout(() => setStage(1), 2000),
-      setTimeout(() => setStage(2), 4000),
-      setTimeout(() => setStage(3), 6000),
+      setTimeout(() => setStage(0), 600),
+      setTimeout(() => setStage(1), 2100),
+      setTimeout(() => setStage(2), 4200),
+      setTimeout(() => setStage(3), 6400),
     ];
     return () => seq.forEach(clearTimeout);
   }, []);
@@ -353,7 +398,7 @@ const WhatsAppDemo = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-[82%] bg-[#202C33] text-[#E9EDEF] rounded-[18px] rounded-tl-[6px] px-3 py-2 mb-2"
           >
-            🌞 Morning Play: Build a paper airplane together — one-minute race!
+            🌞 Morning Spark: Build a paper airplane together — one-minute race!
             <div className="text-[10px] text-[#8696A0] text-right mt-1">08:59</div>
           </motion.div>
         )}
@@ -376,6 +421,7 @@ const WhatsAppDemo = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute bottom-[58px] left-4 flex items-center gap-1"
+              aria-live="polite"
             >
               {[0, 1, 2].map((d) => (
                 <motion.span
@@ -412,56 +458,77 @@ const WhatsAppDemo = () => {
 /* ======================== Rest of the Kidoose site ======================== */
 /* ========================================================================== */
 
-/* ---------------- Hero ---------------- */
-const Hero = ({ onPrimary, onSample }) => (
-  <section id="hero-section" className="text-white text-center pt-16 md:pt-20 pb-24 md:pb-20 px-6">
-    <div className="max-w-4xl mx-auto">
-      <p className="text-white/70 text-sm md:text-base">From two parents who wanted calmer, happier days.</p>
-      <h1 className="mt-2 text-4xl md:text-6xl font-extrabold leading-tight">
-        Turn{" "}
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8BA7FF] to-[#F5C16E]">
-          7 minutes a day
-        </span>{" "}
-        into rituals your child will cherish.
-      </h1>
-      <p className="mt-5 text-white/85 text-lg leading-relaxed">
-        Every morning: a playful idea. Every night: a calming story.{" "}
-        <span className="underline underline-offset-4">Delivered on WhatsApp</span> — no app to install.
-      </p>
+/* ---------------- Hero (with subtle parallax) ---------------- */
+const Hero = ({ onPrimary, onSample }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], [0, -20]);
 
-      <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-        <button
-          onClick={onPrimary}
-          className="rounded-2xl bg-white text-gray-900 px-6 py-3 font-semibold shadow hover:shadow-md w-full sm:w-auto"
-        >
-          Start your free week
-        </button>
-        <button
-          onClick={onSample}
-          className="rounded-2xl border border-white/25 bg-white/5 text-white px-6 py-3 font-semibold hover:bg-white/10 w-full sm:w-auto"
-        >
-          Send me today’s sample
-        </button>
-      </div>
+  return (
+    <section ref={ref} id="hero-section" className="text-white text-center pt-16 md:pt-20 pb-24 md:pb-20 px-6">
+      <motion.div style={{ y }} className="max-w-4xl mx-auto">
+        <p className="text-white/70 text-sm md:text-base">From two parents who wanted calmer, happier days.</p>
+        <h1 className="mt-2 text-4xl md:text-6xl font-extrabold leading-tight">
+          Turn{" "}
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8BA7FF] to-[#F5C16E]">
+            7 minutes a day
+          </span>{" "}
+          into rituals your child will cherish.
+        </h1>
+        <p className="mt-4 text-white/85 text-lg leading-relaxed">
+          Created by two parents in Portland who wanted calmer evenings with their kids.
+        </p>
+        <p className="mt-2 text-white/85 text-lg leading-relaxed">
+          Every morning: a playful spark. Every night: a calming story.{" "}
+          <span className="underline underline-offset-4">Delivered on WhatsApp</span> — no app to install.
+        </p>
 
-      <p className="mt-4 text-white/75 italic">No charge until your free week ends · Cancel anytime</p>
-
-      {/* Trust strip + badges */}
-      <div className="mt-5 flex flex-col items-center gap-1 text-white/70 text-sm">
-        <div>Trusted by 1,200+ parents · 97% stay after the free week</div>
-        <div className="flex items-center gap-3 opacity-90">
-          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">WhatsApp-first</span>
-          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Cancel anytime</span>
-          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Under 7 minutes/day</span>
+        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <motion.button
+            onClick={onPrimary}
+            whileTap={{ scale: 0.98 }}
+            className="group rounded-2xl bg-white text-gray-900 px-6 py-3 font-semibold shadow hover:shadow-md w-full sm:w-auto relative overflow-hidden"
+          >
+            <span className="relative z-10">Start your free week</span>
+            <motion.span
+              aria-hidden
+              className="absolute inset-0 opacity-0 group-hover:opacity-100"
+              initial={false}
+              animate={{}}
+              transition={{ duration: 0.3 }}
+              style={{
+                background:
+                  "radial-gradient(650px 150px at 50% 0%, rgba(139,167,255,0.25), transparent 60%), radial-gradient(650px 150px at 50% 100%, rgba(245,193,110,0.25), transparent 60%)",
+              }}
+            />
+          </motion.button>
+          <button
+            onClick={onSample}
+            className="rounded-2xl border border-white/25 bg-white/5 text-white px-6 py-3 font-semibold hover:bg-white/10 w-full sm:w-auto"
+          >
+            Send me today’s sample
+          </button>
         </div>
-      </div>
 
-      <div className="mt-10 flex justify-center pb-6 sm:pb-0">
-        <WhatsAppDemo />
-      </div>
-    </div>
-  </section>
-);
+        <p className="mt-4 text-white/75 italic">Start free — we’ll only charge if you decide to stay. Cancel anytime.</p>
+
+        {/* Trust strip + badges */}
+        <div className="mt-5 flex flex-col items-center gap-1 text-white/70 text-sm">
+          <div>Trusted by 1,200+ U.S. parents · 97% stay after the free week</div>
+          <div className="flex items-center gap-3 opacity-90">
+            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">WhatsApp-first</span>
+            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Cancel anytime</span>
+            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Under 7 minutes/day</span>
+          </div>
+        </div>
+
+        <div className="mt-10 flex justify-center pb-6 sm:pb-0">
+          <WhatsAppDemo />
+        </div>
+      </motion.div>
+    </section>
+  );
+};
 
 /* ---------------- How ---------------- */
 const How = () => (
@@ -474,15 +541,19 @@ const How = () => (
           { icon: "🌞", title: "Morning Spark", text: "2–5 minute play prompts using what you already have at home." },
           { icon: "🌙", title: "Bedtime Story", text: "Gentle, short stories that help kids wind down and love bedtime." },
           { icon: "💬", title: "On WhatsApp", text: "No new app. Two small nudges at the right time, every day." },
-        ].map((c) => (
-          <div
+        ].map((c, i) => (
+          <motion.div
             key={c.title}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.45, delay: i * 0.05 }}
             className="rounded-2xl border border-white/12 bg-white/6 backdrop-blur-lg p-6 text-left shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
           >
             <div className="text-2xl">{c.icon}</div>
             <h3 className="mt-2 text-xl font-semibold text-white">{c.title}</h3>
             <p className="mt-2 text-white/80">{c.text}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -492,14 +563,14 @@ const How = () => (
 /* ---------------- Reviews ---------------- */
 const Reviews = () => {
   const items = [
-    { name: "Sara A. — mom of a 5-yr-old", text: "Kidoose turned chaos into a sweet ritual. My son actually asks for bedtime now!" },
-    { name: "Omar K. — dad of twins", text: "Those tiny morning prompts are gold. Zero prep, big smiles before school." },
-    { name: "Mina & Ali — parents of 3 & 7", text: "Two messages a day, huge impact. Less screens, more connection." },
+    { name: "Sara — mom of a 5-year-old (Portland)", text: "Kidoose turned chaos into a sweet ritual. My son actually asks for bedtime now!" },
+    { name: "Omar — dad of twins (Austin)", text: "Those tiny morning prompts are gold. Zero prep, big smiles before school." },
+    { name: "Mina & Ali — parents of 3 & 7 (NJ)", text: "Two messages a day, huge impact. Less screens, more connection." },
   ];
   return (
     <section id="reviews" className="py-16 md:py-20">
       <div className="mx-auto max-w-6xl px-6 text-center text-white">
-        <h2 className="text-3xl md:text-4xl font-extrabold">Parents are loving Kidoose</h2>
+        <h2 className="text-3xl md:text-4xl font-extrabold">Here’s what parents say after their first week</h2>
         <p className="mt-3 text-white/80">Real voices. Real routines transformed.</p>
         <div className="mt-10 grid md:grid-cols-3 gap-6">
           {items.map((r, i) => (
@@ -511,8 +582,11 @@ const Reviews = () => {
               transition={{ duration: 0.5, delay: i * 0.08 }}
               className="rounded-2xl border border-white/12 bg-white/6 backdrop-blur-lg p-6 text-left text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
             >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-full bg-white/10 border border-white/15" />
+                <p className="text-white/80 text-sm">{r.name}</p>
+              </div>
               <p className="text-white/90 leading-relaxed">“{r.text}”</p>
-              <p className="mt-4 text-white/70 text-sm">{r.name}</p>
             </motion.div>
           ))}
         </div>
@@ -521,7 +595,7 @@ const Reviews = () => {
   );
 };
 
-/* ---------------- Pricing (centered head/CTA, left-aligned bullets) ---------------- */
+/* ---------------- Pricing (centered head/CTA, left-aligned bullets, navy text for $7.99) ---------------- */
 const Pricing = ({ onStart }) => {
   const plans = useMemo(
     () => [
@@ -530,8 +604,8 @@ const Pricing = ({ onStart }) => {
         name: "Starter",
         tag: "Best for curious first-timers",
         price: "$4.99/mo",
-        features: ["Morning game + bedtime story", "Short cozy replies", "Email or WhatsApp"],
-        cta: "Try a week of joyful mornings 🌞",
+        features: ["🌞 Morning game + 🌙 bedtime story", "Short cozy replies", "Email or WhatsApp"],
+        cta: "Experience your first calm mornings — free",
       },
       {
         id: "family",
@@ -539,16 +613,16 @@ const Pricing = ({ onStart }) => {
         tag: "Best for families with 1–2 kids",
         price: "$7.99/mo",
         features: ["Everything in Starter", "“Bad day?” extra support", "Weekly recap + sibling tweak"],
-        cta: "Start calmer days tonight 🌙",
+        cta: "Start calmer days tonight",
         popular: true,
       },
       {
         id: "premium",
         name: "Premium",
-        tag: "Best for story lovers or siblings",
+        tag: "For story lovers / siblings",
         price: "$11.99/mo",
         features: ["Everything in Family", "Calm audio stories", "Seasonal packs + name insert"],
-        cta: "Make bedtime magical ✨",
+        cta: "Tuck them in with magic",
       },
     ],
     []
@@ -585,14 +659,21 @@ const Pricing = ({ onStart }) => {
               <div className="sm:text-center">
                 <h3 className={clsx("text-2xl font-semibold", p.popular && "text-[#12151B]")}>{p.name}</h3>
                 <p className={clsx("text-sm mt-1 italic", p.popular ? "text-[#12151B]/80" : "text-white/70")}>{p.tag}</p>
-                <div className={clsx("text-4xl font-extrabold mt-3", p.popular && "text-[#12151B]")}>{p.price}</div>
+                <div
+                  className={clsx(
+                    "text-4xl font-extrabold mt-3",
+                    p.popular ? "text-[#12151B]" : "text-white",
+                  )}
+                >
+                  {p.price}
+                </div>
               </div>
 
-              {/* Left-aligned bullet list, centered block */}
+              {/* Left-aligned bullets */}
               <ul className={clsx("mt-4 space-y-2 text-left mx-auto max-w-[22rem]", p.popular ? "text-[#12151B]" : "text-white/90")}>
                 {p.features.map((f) => (
                   <li key={f} className="flex gap-2 items-start justify-start">
-                    <span>✓</span>
+                    <span aria-hidden>—</span>
                     <span>{f}</span>
                   </li>
                 ))}
@@ -618,6 +699,13 @@ const Pricing = ({ onStart }) => {
               <p className={clsx("mt-3 text-xs text-center", p.popular ? "text-[#12151B]/75" : "text-white/70")}>
                 🛡️ Cancel anytime · 💌 No app needed · ❤️ 97% stay after free week
               </p>
+
+              {/* Testimonial micro-badge on Family plan */}
+              {p.id === "family" && (
+                <div className="mt-3 text-xs text-center italic opacity-90">
+                  “This is the one we use!” — Jess, NY mom
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
@@ -635,11 +723,12 @@ const Footer = () => (
       <p>© {new Date().getFullYear()} KIDOOSE · All rights reserved</p>
       <p className="mt-2">📧 hello@kidoose.com · 📞 +1 (555) 123-4567</p>
       <p className="mt-4 italic">Your child will remember stories, not screens. Start your free week — and make tonight magical ✨</p>
+      <p className="mt-2 text-white/60">Founded by two storytelling parents who believe in calm, connection, and wonder.</p>
     </div>
   </footer>
 );
 
-/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer, sample/trial modes) ---------------- */
+/* ---------------- Sign Up Modal (masked phone, OTP flow, confetti, 30s resend timer, sample/trial modes) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTrial }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
 
@@ -657,6 +746,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
   const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [statusMsg, setStatusMsg] = useState("");
   const popRef = useRef(null);
 
   // reset on close
@@ -672,6 +762,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
       setOtp("");
       setVerified(false);
       setResendTimer(0);
+      setStatusMsg("");
     }
   }, [open, defaultPlan]);
 
@@ -716,11 +807,13 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
     if (!isComplete || sending || verified || otpSent) return;
     setSending(true);
     setOtp("");
+    setStatusMsg("Sending code…");
     setTimeout(() => {
       setSending(false);
       setOtpSent(true);
       setResendTimer(30); // start countdown
-    }, 1000);
+      setStatusMsg("Code sent. Check WhatsApp.");
+    }, 900);
   };
 
   const onEnter = (e) => {
@@ -734,6 +827,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
   useEffect(() => {
     if (otpSent && !verified && otp.trim().length === 6) {
       setVerified(true);
+      setStatusMsg("Verified. Welcome!");
     }
   }, [otp, otpSent, verified]);
 
@@ -754,6 +848,8 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}
+          aria-modal="true"
+          role="dialog"
         >
           <motion.div
             className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6 overflow-hidden"
@@ -779,11 +875,11 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
               {mode === "sample" ? (
                 <>We’ll send a one-time sample message to WhatsApp {flag}.</>
               ) : (
-                <>No charge until your free week ends · Cancel anytime · Messages via WhatsApp {flag}</>
+                <>Start free — cancel anytime. Messages via WhatsApp {flag}.</>
               )}
             </p>
 
-            {/* Step indicator */}
+            {/* Step indicator + subtitles */}
             <div className="mt-3 flex items-center gap-2 text-xs text-white/70">
               {[1, 2, 3].map((n) => (
                 <div key={n} className="flex items-center gap-2">
@@ -802,6 +898,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                 {verified ? (mode === "sample" ? "Success" : "Details") : otpSent ? "Enter OTP" : "Verify phone"}
               </div>
             </div>
+            <div className="sr-only" aria-live="polite">{statusMsg}</div>
 
             {/* Phone input with verify button */}
             <div className="relative mt-5 w-full">
@@ -854,6 +951,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                     fill="none"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    aria-hidden
                   >
                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
                     <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -894,6 +992,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                             setSending(false);
                             setOtpSent(true);
                             setResendTimer(30);
+                            setStatusMsg("Code re-sent.");
                           }, 800);
                         }, 10);
                       }}
@@ -909,7 +1008,9 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
               )}
             </AnimatePresence>
 
-            {/* Post-verify content */}
+            {/* Confetti (on verify) */}
+            <ConfettiBurst trigger={verified} />
+
             {/* SAMPLE MODE → Success block (skip plan) */}
             {mode === "sample" && verified && (
               <motion.div
@@ -924,7 +1025,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                   transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <div className="text-white/90 font-semibold">All set!</div>
-                <div className="text-white/75 text-sm mt-1">We’ve sent today’s sample to your WhatsApp {flag}.</div>
+                <div className="text-white/75 text-sm mt-1">Check WhatsApp — your first little moment is waiting 🌙</div>
                 <button
                   className="mt-3 w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold"
                   onClick={() => {
@@ -962,7 +1063,9 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                     aria-haspopup="listbox"
                     aria-expanded={planOpen}
                   >
-                    {plan ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.price}` : "Select plan"}
+                    {plan
+                      ? `${[{ id: "starter", name: "Starter", price: "$4.99/mo" }, { id: "family", name: "Family", price: "$7.99/mo" }, { id: "premium", name: "Premium", price: "$11.99/mo" }].find((x) => x.id === plan)?.name} · ${[{ id: "starter", name: "Starter", price: "$4.99/mo" }, { id: "family", name: "Family", price: "$7.99/mo" }, { id: "premium", name: "Premium", price: "$11.99/mo" }].find((x) => x.id === plan)?.price}`
+                      : "Select plan"}
                   </button>
 
                   <AnimatePresence>
@@ -974,21 +1077,23 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                         className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
                         role="listbox"
                       >
-                        {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt) => (
-                          <button
-                            key={opt.id}
-                            onClick={() => {
-                              setPlan(opt.id);
-                              setPlanOpen(false);
-                            }}
-                            className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2"
-                            role="option"
-                            aria-selected={plan === opt.id}
-                          >
-                            <span>{opt.name}</span>
-                            <span className="text-white/75">{opt.price}</span>
-                          </button>
-                        ))}
+                        {[{ id: "starter", name: "Starter", price: "$4.99/mo" }, { id: "family", name: "Family", price: "$7.99/mo" }, { id: "premium", name: "Premium", price: "$11.99/mo" }].map(
+                          (opt) => (
+                            <button
+                              key={opt.id}
+                              onClick={() => {
+                                setPlan(opt.id);
+                                setPlanOpen(false);
+                              }}
+                              className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2"
+                              role="option"
+                              aria-selected={plan === opt.id}
+                            >
+                              <span>{opt.name}</span>
+                              <span className="text-white/75">{opt.price}</span>
+                            </button>
+                          )
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1026,17 +1131,85 @@ const ScrollToTopOrb = ({ show }) => (
             "conic-gradient(from 160deg at 50% 50%, #EAF0FF, #83A3FF 35%, #5E7AFF 70%, #355BFF 100%)",
         }}
       >
-        <motion.span
-          className="inline-block"
-          initial={false}
-          whileTap={{ scale: 0.92 }}
-          whileHover={{ scale: 1.06 }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" className="mx-auto">
+        <motion.span className="inline-block" initial={false} whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.06 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" className="mx-auto" aria-hidden>
             <path d="M12 5l-7 7h14l-7-7z" fill="white" />
           </svg>
         </motion.span>
       </motion.button>
+    )}
+  </AnimatePresence>
+);
+
+/* ---------------- Sticky Social-Proof Chip (shows briefly on scroll) ---------------- */
+const SocialProofChip = ({ show }) => (
+  <AnimatePresence>
+    {show && (
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 16 }}
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-full text-sm text-white/90 bg-black/40 border border-white/20 backdrop-blur-md"
+      >
+        ❤️ Trusted by 1,200+ U.S. parents
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+/* ---------------- Exit Intent Offer (desktop only, once) ---------------- */
+const ExitIntent = ({ open, onClose, onSample }) => (
+  <AnimatePresence>
+    {open && (
+      <motion.div
+        className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/50 backdrop-blur-sm px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        role="dialog"
+        aria-modal="true"
+      >
+        <motion.div
+          initial={{ y: -12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -12, opacity: 0 }}
+          className="w-full max-w-xl rounded-2xl border border-white/20 bg-[rgba(20,25,35,0.96)] text-white p-5 shadow-xl"
+        >
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">🌙</div>
+            <div className="flex-1">
+              <h4 className="text-lg font-semibold">Still thinking it over?</h4>
+              <p className="text-white/80 mt-1">
+                Try a free sample on WhatsApp — no signup needed. See how your child feels tonight.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={onSample}
+                  className="rounded-xl bg-white text-gray-900 px-4 py-2 font-semibold"
+                >
+                  Send me a free sample
+                </button>
+                <button
+                  onClick={onClose}
+                  className="rounded-xl border border-white/25 px-4 py-2 text-white/90 hover:bg-white/10"
+                >
+                  Not now
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="ml-2 w-9 h-9 rounded-full bg-black/30 border border-white/20 grid place-items-center"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
     )}
   </AnimatePresence>
 );
@@ -1048,6 +1221,9 @@ export default function App() {
   const [signupMode, setSignupMode] = useState("trial"); // "trial" | "sample"
   const [showHeaderButtons, setShowHeaderButtons] = useState(false);
   const [showTopOrb, setShowTopOrb] = useState(false);
+  const [chipVisible, setChipVisible] = useState(false);
+  const [exitOnceShown, setExitOnceShown] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
 
   useEffect(() => {
     document.body.style.background = "transparent";
@@ -1055,15 +1231,34 @@ export default function App() {
 
     const onScroll = () => {
       setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
-
       const hero = document.getElementById("hero-section");
       const heroH = hero?.offsetHeight || 600;
-      setShowTopOrb(window.scrollY > heroH * 0.8); // orb appears after most of hero
+      setShowTopOrb(window.scrollY > heroH * 0.8);
+
+      // show social proof chip briefly after first meaningful scroll
+      if (window.scrollY > 140 && !chipVisible) {
+        setChipVisible(true);
+        setTimeout(() => setChipVisible(false), 2400);
+      }
     };
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [chipVisible]);
+
+  // desktop exit-intent (once)
+  useEffect(() => {
+    const handler = (e) => {
+      const isDesktop = window.innerWidth >= 1024;
+      if (!isDesktop || exitOnceShown || showSignup) return;
+      if (!e.relatedTarget && e.clientY <= 0) {
+        setExitOpen(true);
+        setExitOnceShown(true);
+      }
+    };
+    document.addEventListener("mouseout", handler);
+    return () => document.removeEventListener("mouseout", handler);
+  }, [exitOnceShown, showSignup]);
 
   return (
     <div className="text-white min-h-screen">
@@ -1107,6 +1302,9 @@ export default function App() {
 
       <Footer />
 
+      {/* Sticky social-proof chip */}
+      <SocialProofChip show={chipVisible} />
+
       {/* Scroll-to-Top Orb (mobile) */}
       <ScrollToTopOrb show={showTopOrb} />
 
@@ -1122,6 +1320,17 @@ export default function App() {
             setSignupMode("trial");
             setShowSignup(true);
           }, 80);
+        }}
+      />
+
+      {/* Exit intent sample prompt */}
+      <ExitIntent
+        open={exitOpen}
+        onClose={() => setExitOpen(false)}
+        onSample={() => {
+          setExitOpen(false);
+          setSignupMode("sample");
+          setShowSignup(true);
         }}
       />
     </div>
