@@ -1,9 +1,8 @@
-// App.jsx — WhatsApp iPhone Dark Replica (no sticker, typing moved below messages)
-
+// App.jsx — WhatsApp Dark Replica (true iPhone layout + natural typing indicator)
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/* ---------- iPhone status icons ---------- */
+/* ---------- Status Bar ---------- */
 const Clock = ({ time }) => (
   <span className="text-white text-[13px] font-[500] tracking-tight leading-none">{time}</span>
 );
@@ -37,7 +36,7 @@ const BatteryIcon = ({ level = 0.75 }) => (
   </svg>
 );
 
-/* ---------- WhatsApp header icons ---------- */
+/* ---------- Icons ---------- */
 const Icon = {
   Back: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2.3" strokeLinecap="round" className="w-5 h-5">
@@ -80,7 +79,7 @@ const Icon = {
   ),
 };
 
-/* ---------- wallpaper pattern ---------- */
+/* ---------- Wallpaper ---------- */
 const WALLPAPER = `url('data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
   <rect width="200" height="200" fill="rgba(13,20,25,1)"/>
@@ -89,7 +88,6 @@ const WALLPAPER = `url('data:image/svg+xml;utf8,${encodeURIComponent(`
     <circle cx="160" cy="60" r="12"/>
     <path d="M80 160l20-8 20 8-20 8z"/>
     <path d="M140 140c0 8 12 8 12 0s-12-8-12 0z"/>
-    <path d="M32 120c10 0 10 14 0 14s-10-14 0-14z"/>
   </g>
 </svg>`)}')`;
 
@@ -104,24 +102,26 @@ const useIosClock = () => {
   return time;
 };
 
-/* ---------- main ---------- */
+/* ---------- Main ---------- */
 export default function App() {
   const time = useIosClock();
-  const [battery] = useState(0.8);
+  const [battery] = useState(0.82);
 
-  // staged flow
-  const [stage, setStage] = useState(0); // 0 typing1, 1 msg1, 2 msg2, 3 typing end
+  const [stage, setStage] = useState(0); // 0 typing, 1 msg1, 2 typing again, 3 msg2
   useEffect(() => {
-    const t1 = setTimeout(() => setStage(1), 1000);
-    const t2 = setTimeout(() => setStage(2), 2500);
-    const t3 = setTimeout(() => setStage(3), 3800);
-    return () => [t1, t2, t3].forEach(clearTimeout);
+    const seq = [
+      setTimeout(() => setStage(0), 500),
+      setTimeout(() => setStage(1), 2000),
+      setTimeout(() => setStage(2), 4000),
+      setTimeout(() => setStage(3), 6000),
+    ];
+    return () => seq.forEach(clearTimeout);
   }, []);
 
   return (
     <div className="min-h-screen grid place-items-center bg-[#0E1624] font-[system-ui] text-white">
       <div className="w-[360px] sm:w-[390px] bg-[#111B21] rounded-t-[28px] overflow-hidden shadow-2xl border border-black/40">
-        {/* top bar */}
+        {/* Top status bar */}
         <div className="flex justify-between items-center px-4 pt-2 pb-1 bg-black">
           <Clock time={time} />
           <div className="flex items-center gap-1.5">
@@ -131,7 +131,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* header */}
+        {/* Chat header */}
         <div className="flex items-center justify-between px-3 py-2 bg-[#202C33]">
           <div className="flex items-center gap-2">
             <Icon.Back />
@@ -147,12 +147,11 @@ export default function App() {
           </div>
         </div>
 
-        {/* chat area */}
+        {/* Chat area */}
         <div
-          className="min-h-[520px] px-3 py-3"
+          className="relative min-h-[520px] px-3 py-3"
           style={{ backgroundImage: WALLPAPER, backgroundRepeat: "repeat", backgroundSize: "200px 200px" }}
         >
-          {/* message 1 */}
           {stage >= 1 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -163,8 +162,7 @@ export default function App() {
               <div className="text-[10px] text-[#8696A0] text-right mt-1">08:59</div>
             </motion.div>
           )}
-          {/* message 2 */}
-          {stage >= 2 && (
+          {stage >= 3 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -175,40 +173,38 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* typing after messages */}
+          {/* Typing indicator — bottom-left, above composer */}
           <AnimatePresence>
-            {stage === 3 && (
+            {(stage === 0 || stage === 2) && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="max-w-[82%] bg-[#1F2C33] text-[#E9EDEF] rounded-[18px] rounded-tl-[6px] px-3 py-2 mt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute bottom-[58px] left-4 flex items-center gap-1"
               >
-                <div className="flex items-center gap-1">
-                  {[0, 1, 2].map((d) => (
-                    <motion.span
-                      key={d}
-                      className="w-2 h-2 rounded-full bg-[#AEB8BD]/80"
-                      animate={{ y: [0, -3, 0], opacity: [0.6, 1, 0.6] }}
-                      transition={{ duration: 0.9, repeat: Infinity, delay: d * 0.15 }}
-                    />
-                  ))}
-                </div>
+                {[0, 1, 2].map((d) => (
+                  <motion.span
+                    key={d}
+                    className="w-[7px] h-[7px] rounded-full bg-[#AEB8BD]/90"
+                    animate={{ y: [0, -3, 0], opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 0.9, repeat: Infinity, delay: d * 0.15 }}
+                  />
+                ))}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* composer */}
-        <div className="bg-[#202C33] px-3 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        {/* Composer */}
+        <div className="bg-[#202C33] px-3 py-[6px] flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1">
             <Icon.Plus />
-            <div className="rounded-full bg-[#2A3942] text-[#E9EDEF] text-[14px] px-4 py-2 w-[230px] sm:w-[260px]">
+            <div className="flex items-center bg-[#2A3942] rounded-full px-4 py-[8px] flex-1 text-[#E9EDEF] text-[14px]">
               Message
             </div>
             <Icon.Camera />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pl-2">
             <Icon.Mic />
             <Icon.Send />
           </div>
