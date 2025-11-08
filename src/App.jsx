@@ -1,11 +1,11 @@
-// App.jsx — KIDOOSE Conversion Edition (WhatsApp Dark • Real iPhone Frame • Kidoose-only messages)
-// Tech: React 18, TailwindCSS, framer-motion, clsx
+// App.jsx — KIDOOSE Cinematic WhatsApp Dark • iPhone Frame • Typing + Delivery • Full Site
+// Requirements: React 18, TailwindCSS, framer-motion, clsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import clsx from "clsx";
 
-/* ---------------- Theme ---------------- */
+/* ---------------- Site Palette ---------------- */
 const PAL = {
   nightTop: "#0E1624",
   nightMid: "#16253B",
@@ -13,35 +13,46 @@ const PAL = {
   ink: "#12151B",
 };
 
-/* ---------------- Country & Dial Helpers ---------------- */
-const COUNTRY_FORMATS = {
-  US: { dial: "+1",   mask: "--- --- ----",  max: 10 },
-  CA: { dial: "+1",   mask: "--- --- ----",  max: 10 },
-  GB: { dial: "+44",  mask: "---- ------",   max: 10 },
-  AU: { dial: "+61",  mask: "--- --- ---",   max: 9 },
-  NZ: { dial: "+64",  mask: "--- --- ----",  max: 9 },
-  IE: { dial: "+353", mask: "-- --- ----",   max: 9 },
-  SG: { dial: "+65",  mask: "---- ----",     max: 8 },
-  IN: { dial: "+91",  mask: "----- -----",   max: 10 },
-  TR: { dial: "+90",  mask: "--- --- ----",  max: 10 },
-  AE: { dial: "+971", mask: "-- --- ----",   max: 9 },
-  SA: { dial: "+966", mask: "-- --- ----",   max: 9 },
-  EG: { dial: "+20",  mask: "--- --- ----",  max: 9 },
-  KW: { dial: "+965", mask: "--- ----",      max: 8 },
-  QA: { dial: "+974", mask: "---- ----",     max: 8 },
-  BH: { dial: "+973", mask: "---- ----",     max: 8 },
-  OM: { dial: "+968", mask: "---- ----",     max: 8 },
-  JO: { dial: "+962", mask: "-- ------",     max: 9 },
-  LB: { dial: "+961", mask: "-- --- ---",    max: 8 },
-  MA: { dial: "+212", mask: "-- --- ----",   max: 9 },
-  DZ: { dial: "+213", mask: "-- --- ----",   max: 9 },
-  DEFAULT: { dial: "+1", mask: "------------", max: 12 },
+/* ---------------- Phone / WhatsApp Dark Palette ---------------- */
+const WP = {
+  bg: "#0B141A",
+  header: "#202C33",
+  doodle: "rgba(255,255,255,0.06)",
+  bubbleIn: "#202C33",
+  text: "#E9EDEF",
+  time: "#8696A0",
+  tickGray: "#8A8F95",
+  tickBlue: "#53BDEB",
 };
 
+/* ---------------- Country & Dial Helpers ---------------- */
+const COUNTRY_FORMATS = {
+  US: { dial: "+1", mask: "--- --- ----", max: 10 },
+  CA: { dial: "+1", mask: "--- --- ----", max: 10 },
+  GB: { dial: "+44", mask: "---- ------", max: 10 },
+  AU: { dial: "+61", mask: "--- --- ---", max: 9 },
+  NZ: { dial: "+64", mask: "--- --- ----", max: 9 },
+  IE: { dial: "+353", mask: "-- --- ----", max: 9 },
+  SG: { dial: "+65", mask: "---- ----", max: 8 },
+  IN: { dial: "+91", mask: "----- -----", max: 10 },
+  TR: { dial: "+90", mask: "--- --- ----", max: 10 },
+  AE: { dial: "+971", mask: "-- --- ----", max: 9 },
+  SA: { dial: "+966", mask: "-- --- ----", max: 9 },
+  EG: { dial: "+20", mask: "--- --- ----", max: 9 },
+  KW: { dial: "+965", mask: "--- ----", max: 8 },
+  QA: { dial: "+974", mask: "---- ----", max: 8 },
+  BH: { dial: "+973", mask: "---- ----", max: 8 },
+  OM: { dial: "+968", mask: "---- ----", max: 8 },
+  JO: { dial: "+962", mask: "-- ------", max: 9 },
+  LB: { dial: "+961", mask: "-- --- ---", max: 8 },
+  MA: { dial: "+212", mask: "-- --- ----", max: 9 },
+  DZ: { dial: "+213", mask: "-- --- ----", max: 9 },
+  DEFAULT: { dial: "+1", mask: "------------", max: 12 },
+};
 const isoToFlagEmoji = (iso2) =>
   iso2 ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt())) : "🌍";
 
-/* ---------------- Intent from URL ---------------- */
+/* ---------------- Intent From URL ---------------- */
 const intentFromQuery = () => {
   const params = new URLSearchParams(window.location.search);
   const raw = (params.get("utm_term") || params.get("q") || "").toLowerCase();
@@ -50,7 +61,6 @@ const intentFromQuery = () => {
   if (raw.includes("morning")) return "morning";
   return "default";
 };
-
 const COPY = {
   bedtime: {
     h1: "Bedtime stories that make nights easier — starting tonight.",
@@ -78,12 +88,11 @@ const COPY = {
   },
 };
 
-/* ---------------- Hook: Detect Country Dial Code ---------------- */
+/* ---------------- Hook: Detect Country ---------------- */
 const useCountryDialCode = () => {
   const [dialCode, setDialCode] = useState("+1");
   const [countryCode, setCountryCode] = useState("US");
   const [flag, setFlag] = useState("🇺🇸");
-
   useEffect(() => {
     let active = true;
     fetch("https://ipapi.co/json/")
@@ -101,15 +110,12 @@ const useCountryDialCode = () => {
         setDialCode("+1");
         setFlag("🇺🇸");
       });
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
-
   return { dialCode, countryCode, flag };
 };
 
-/* ---------------- Animated Site Backdrop ---------------- */
+/* ---------------- Animated Backdrop ---------------- */
 const Backdrop = () => {
   const ref = useRef(null);
   useEffect(() => {
@@ -151,7 +157,7 @@ const KidooseLogo = ({ centerOnMobile = false }) => (
   </div>
 );
 
-/* ---------------- Header (scroll-aware) ---------------- */
+/* ---------------- Header ---------------- */
 const Header = ({ onPrimary, onDemo, showButtons }) => (
   <header className="sticky top-0 z-40 bg-black/30 backdrop-blur-xl border-b border-white/10">
     <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-center md:justify-between">
@@ -159,12 +165,8 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
       <AnimatePresence>
         {showButtons && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }} className="hidden md:flex items-center gap-3">
-            <button onClick={onDemo} className="rounded-2xl border border-white/25 bg-white/5 text-white px-4 py-2 font-semibold hover:bg-white/10">
-              Play sample
-            </button>
-            <button onClick={onPrimary} className="rounded-2xl bg-white text-gray-900 px-5 py-2 font-semibold shadow hover:shadow-md">
-              Start Free Week
-            </button>
+            <button onClick={onDemo} className="rounded-2xl border border-white/25 bg-white/5 text-white px-4 py-2 font-semibold hover:bg-white/10">Play sample</button>
+            <button onClick={onPrimary} className="rounded-2xl bg-white text-gray-900 px-5 py-2 font-semibold shadow hover:shadow-md">Start Free Week</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -172,75 +174,135 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
   </header>
 );
 
-/* ---------------- iPhone (front-facing) + WhatsApp Dark clone ---------------- */
-const IPhoneFrame = ({ children }) => (
-  <div className="relative mx-auto w-[360px] sm:w-[380px]">
-    {/* Outer device */}
-    <div className="relative rounded-[46px] bg-[#0A0A0A] shadow-[0_35px_80px_rgba(0,0,0,0.6)]">
-      {/* Bezel */}
-      <div className="rounded-[46px] border-[10px] border-black/90">
-        {/* Glass reflection */}
-        <div className="pointer-events-none absolute inset-0 rounded-[36px] [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
-        {/* Notch */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-0 h-8 w-44 bg-black/90 rounded-b-2xl z-20" />
-        {/* Buttons (left side) */}
-        <div className="absolute -left-1 top-28 h-8 w-1 rounded-r bg-neutral-800" />
-        <div className="absolute -left-1 top-44 h-12 w-1 rounded-r bg-neutral-800" />
-        {/* Power (right) */}
-        <div className="absolute -right-1 top-36 h-16 w-1 rounded-l bg-neutral-800" />
+/* ---------------- iPhone Frame ---------------- */
+const IPhoneFrame = ({ children }) => {
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
+  const rotateX = useTransform(tiltY, [-30, 30], [3, -3]);
+  const rotateY = useTransform(tiltX, [-30, 30], [-2, 2]);
 
-        {/* Screen */}
-        <div className="relative h-[720px] rounded-[36px] overflow-hidden bg-[#0B141A]">
-          {/* WhatsApp doodle wallpaper (dark, subtle) */}
-          <div
-            className="absolute inset-0 opacity-[0.22]"
-            style={{
-              backgroundImage:
-                "radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)",
-              backgroundPosition: "0 0, 12px 12px",
-              backgroundSize: "24px 24px, 24px 24px",
-            }}
-          />
-          <div className="relative z-10 h-full">{children}</div>
+  return (
+    <motion.div
+      className="relative mx-auto w-[360px] sm:w-[380px]"
+      style={{ perspective: 900 }}
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        tiltX.set(((e.clientX - r.left) / r.width) * 60 - 30);
+        tiltY.set(((e.clientY - r.top) / r.height) * 60 - 30);
+      }}
+      onMouseLeave={() => { tiltX.set(0); tiltY.set(0); }}
+    >
+      <motion.div
+        style={{ rotateX, rotateY }}
+        className="relative rounded-[46px] bg-[#0A0A0A] shadow-[0_35px_80px_rgba(0,0,0,0.55)]"
+      >
+        <div className="relative rounded-[46px] border-[10px] border-black/90">
+          {/* Bezel shine */}
+          <div className="pointer-events-none absolute inset-0 rounded-[36px] [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
+          {/* Notch */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 h-8 w-44 bg-black/90 rounded-b-2xl z-20" />
+          {/* Buttons */}
+          <div className="absolute -left-1 top-28 h-8 w-1 rounded-r bg-neutral-800" />
+          <div className="absolute -left-1 top-44 h-12 w-1 rounded-r bg-neutral-800" />
+          <div className="absolute -right-1 top-36 h-16 w-1 rounded-l bg-neutral-800" />
+          {/* Screen (half height for density) */}
+          <div className="relative h-[480px] rounded-[36px] overflow-hidden" style={{ background: WP.bg }}>
+            {/* Doodle wallpaper (vector-ish) */}
+            <div
+              className="absolute inset-0 opacity-[0.07]"
+              style={{
+                backgroundImage:
+                  `radial-gradient(${WP.doodle} 1px, transparent 1px)`,
+                backgroundSize: "22px 22px",
+              }}
+            />
+            {/* Moving reflection */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.0) 35%, rgba(255,255,255,0.12) 60%, rgba(255,255,255,0) 100%)",
+                mixBlendMode: "overlay",
+                opacity: 0.08,
+              }}
+              animate={{ backgroundPosition: ["-40% -40%", "140% 140%"] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            />
+            {/* Inner content */}
+            <div className="relative z-10 h-full">{children}</div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-);
-
-/* Colors for WhatsApp Dark (iOS) */
-const WP = {
-  bg: "#0B141A",
-  header: "#202C33",
-  bubbleIn: "#202C33",
-  text: "#E9EDEF",
-  timestamp: "#8696A0",
+      </motion.div>
+    </motion.div>
+  );
 };
 
-/* Only Kidoose messages (incoming/left) */
+/* ---------------- WhatsApp Icons (inline SVG to avoid deps) ---------------- */
+const Icon = {
+  Back: (p) => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  ),
+  Phone: (p) => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.8 12.8 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.8 12.8 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  ),
+  Video: (p) => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M23 7l-7 5 7 5V7z" fill="currentColor"/><rect x="1" y="5" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.6"/></svg>
+  ),
+  Plus: (p) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+  ),
+  Mic: (p) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}><rect x="9" y="3" width="6" height="10" rx="3" stroke="currentColor" strokeWidth="1.6"/><path d="M5 12a7 7 0 0 0 14 0M12 19v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+  ),
+  Checks: ({ color = WP.tickGray }) => (
+    <svg width="20" height="14" viewBox="0 0 30 20" fill="none">
+      <path d="M11 11l2 2 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M5 11l2 2 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+};
+
+/* ---------------- WhatsApp Dark Chat (Kidoose only) ---------------- */
 const WhatsAppDarkChat = () => {
-  const [step, setStep] = useState(0);
+  const [phase, setPhase] = useState("typing1"); // typing1 -> msg1 -> typing2 -> msg2
+  const [checksBlue1, setChecksBlue1] = useState(false);
+  const [checksBlue2, setChecksBlue2] = useState(false);
+
   useEffect(() => {
     const timers = [
-      setTimeout(() => setStep(1), 700),   // morning
-      setTimeout(() => setStep(2), 2400),  // bedtime
+      setTimeout(() => setPhase("msg1"), 1500),
+      setTimeout(() => setChecksBlue1(true), 2600),
+      setTimeout(() => setPhase("typing2"), 3200),
+      setTimeout(() => setPhase("msg2"), 5200),
+      setTimeout(() => setChecksBlue2(true), 6400),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const BubbleIn = ({ children, time = "09:00" }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="w-full flex items-start"
-    >
-      <div
-        className="max-w-[82%] px-3.5 py-2.5 rounded-[18px] rounded-tl-[6px] shadow-sm border border-white/5"
-        style={{ background: WP.bubbleIn }}
-      >
-        <div className="text-[14px] leading-snug" style={{ color: WP.text }}>{children}</div>
-        <div className="text-right text-[10px]" style={{ color: WP.timestamp }}>{time}</div>
+  const Typing = () => (
+    <div className="px-3 py-2 ml-2 mt-2 inline-flex items-center gap-2 rounded-2xl" style={{ background: WP.bubbleIn }}>
+      <div className="flex items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <motion.span key={i} className="w-2 h-2 rounded-full bg-white/70"
+            animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }} />
+        ))}
+      </div>
+      <span className="text-[12px] text-white/70">Kidoose is typing…</span>
+    </div>
+  );
+
+  const BubbleIn = ({ children, time = "09:00", blueChecks = false }) => (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 140, damping: 16 }} className="w-full flex items-start">
+      <div className="relative ml-2 mt-2 max-w-[85%] px-3.5 py-2.5 rounded-[18px] rounded-tl-[6px] shadow-sm border border-white/5" style={{ background: WP.bubbleIn }}>
+        {/* bubble tail */}
+        <div className="absolute -left-1 bottom-2 w-2 h-2 rounded-bl-md" style={{ background: WP.bubbleIn, transform: "rotate(45deg)" }} />
+        <div className="text-[15px] leading-snug" style={{ color: WP.text }}>{children}</div>
+        <div className="mt-1.5 flex items-center justify-end gap-1">
+          <span className="text-[11px]" style={{ color: WP.time }}>{time}</span>
+          <span className="scale-75 translate-y-[1px]">
+            <Icon.Checks color={blueChecks ? WP.tickBlue : WP.tickGray} />
+          </span>
+        </div>
       </div>
     </motion.div>
   );
@@ -249,36 +311,46 @@ const WhatsAppDarkChat = () => {
     <IPhoneFrame>
       {/* Header */}
       <div className="sticky top-0 z-20" style={{ background: WP.header }}>
-        <div className="h-12 border-b border-black/40 flex items-center gap-2 px-3">
-          <div className="text-white/70 text-lg">‹</div>
+        <div className="h-12 border-b border-black/40 flex items-center gap-2 px-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont,"SF Pro Text","Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+          <Icon.Back className="text-white/80" />
           <div className="w-7 h-7 rounded-full bg-[#2B3A40]" />
           <div className="flex-1 leading-tight">
             <div className="text-[14px] font-semibold" style={{ color: WP.text }}>Kidoose</div>
-            <div className="text-[11px] text-emerald-400">online</div>
+            <div className="text-[11px] text-emerald-400 flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" /> online
+            </div>
           </div>
-          <div className="text-white/70 text-[18px]">📞</div>
-          <div className="text-white/70 text-[18px] ml-2">🎥</div>
+          <Icon.Phone className="text-white/70" />
+          <Icon.Video className="text-white/70" />
         </div>
       </div>
 
       {/* Messages */}
-      <div className="px-2 py-3 overflow-y-auto h-[660px] space-y-3">
-        {step >= 1 && (
-          <BubbleIn time="09:00">🌞 Morning Play: Build a paper airplane together — one-minute race!</BubbleIn>
+      <div className="px-2 pb-[64px] pt-2 overflow-y-auto h-[420px]">
+        {(phase === "typing1") && <Typing />}
+        {(phase === "msg1" || phase === "typing2" || phase === "msg2") && (
+          <BubbleIn time="9:02 AM" blueChecks={checksBlue1}>
+            🌞 <strong>Morning Play</strong>: Roll two socks into a soft ball and play a mini toss game together.  
+            Count five catches, then high-five and pick a silly team name.  
+            2–3 minutes, big smiles before school.
+          </BubbleIn>
         )}
-        {step >= 2 && (
-          <BubbleIn time="19:00">🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers…” …</BubbleIn>
+        {(phase === "typing2") && <Typing />}
+        {(phase === "msg2") && (
+          <BubbleIn time="7:00 PM" blueChecks={checksBlue2}>
+            🌙 <strong>Bedtime</strong>: “Under the sleepy moon, Milo whispered to the stars.  
+            One winked back and said, ‘Close your eyes, little one — the world will wait.’  
+            Mama kissed his forehead and the night hummed a gentle lullaby…”
+          </BubbleIn>
         )}
       </div>
 
       {/* Composer (disabled look) */}
       <div className="absolute bottom-0 left-0 right-0 px-2 py-2 border-t border-black/40" style={{ background: WP.header }}>
         <div className="flex items-center gap-2">
-          <div className="text-white/50 text-xl">＋</div>
-          <div className="flex-1 rounded-full px-4 py-2 text-[14px] text-white/40 border border-white/10 bg-black/20">
-            Message
-          </div>
-          <div className="text-white/50 text-xl">🎤</div>
+          <Icon.Plus className="text-white/50" />
+          <div className="flex-1 rounded-full px-4 py-2 text-[14px] text-white/40 border border-white/10 bg-black/20">Message</div>
+          <Icon.Mic className="text-white/50" />
         </div>
       </div>
     </IPhoneFrame>
@@ -295,9 +367,7 @@ const TrustStrip = () => (
           "WhatsApp only · No new app · Cancel anytime.",
           "97% stay after the free week.",
         ].map((t) => (
-          <div key={t} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
-            ✓ {t}
-          </div>
+          <div key={t} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm">✓ {t}</div>
         ))}
       </div>
     </div>
@@ -315,18 +385,8 @@ const Hero = ({ onPrimary, onDemo, intent }) => {
         <p className="mt-5 text-white/85 text-lg leading-relaxed">{hero.sub}</p>
 
         <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-          <button
-            onClick={onDemo}
-            className="rounded-2xl border border-white/25 bg-white/5 text-white px-6 py-3 font-semibold hover:bg-white/10 w-full sm:w-auto"
-          >
-            {hero.primary}
-          </button>
-          <button
-            onClick={onPrimary}
-            className="rounded-2xl bg-white text-gray-900 px-6 py-3 font-semibold shadow hover:shadow-md w-full sm:w-auto"
-          >
-            {hero.secondary}
-          </button>
+          <button onClick={onDemo} className="rounded-2xl border border-white/25 bg-white/5 text-white px-6 py-3 font-semibold hover:bg-white/10 w-full sm:w-auto">{hero.primary}</button>
+          <button onClick={onPrimary} className="rounded-2xl bg-white text-gray-900 px-6 py-3 font-semibold shadow hover:shadow-md w-full sm:w-auto">{hero.secondary}</button>
         </div>
 
         <p className="mt-4 text-white/75 italic">No charge until day 8 · Cancel anytime</p>
@@ -334,6 +394,8 @@ const Hero = ({ onPrimary, onDemo, intent }) => {
         <div className="mt-8">
           <WhatsAppDarkChat />
         </div>
+
+        <p className="mt-6 text-white/70">Because bedtime shouldn’t be a battle — and mornings deserve laughter, not rushing.</p>
       </div>
     </section>
   );
@@ -376,14 +438,7 @@ const Reviews = () => {
         <p className="mt-3 text-white/80">Real voices. Real routines transformed.</p>
         <div className="mt-10 grid md:grid-cols-3 gap-6">
           {items.map((r, i) => (
-            <motion.div
-              key={r.name}
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="rounded-2xl border border-white/12 bg-white/6 backdrop-blur-lg p-6 text-left text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
-            >
+            <motion.div key={r.name} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.4 }} transition={{ duration: 0.5, delay: i * 0.08 }} className="rounded-2xl border border-white/12 bg-white/6 backdrop-blur-lg p-6 text-left text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
               <p className="text-white/90 leading-relaxed">“{r.text}”</p>
               <p className="mt-4 text-white/70 text-sm">{r.name}</p>
             </motion.div>
@@ -398,31 +453,9 @@ const Reviews = () => {
 const Pricing = ({ onStart }) => {
   const plans = useMemo(
     () => [
-      {
-        id: "starter",
-        name: "Starter",
-        tag: "Best for curious first-timers",
-        price: "$4.99/mo",
-        features: ["Morning game + bedtime story", "Short cozy replies", "Email or WhatsApp"],
-        cta: "Try a week of joyful mornings 🌞",
-      },
-      {
-        id: "family",
-        name: "Family",
-        tag: "Best for families with 1–2 kids",
-        price: "$7.99/mo",
-        features: ["Everything in Starter", "“Bad day?” extra support", "Weekly recap + sibling tweak"],
-        cta: "Start calmer days tonight 🌙",
-        popular: true,
-      },
-      {
-        id: "premium",
-        name: "Premium",
-        tag: "Best for story lovers or siblings",
-        price: "$11.99/mo",
-        features: ["Everything in Family", "Calm audio stories", "Seasonal packs + name insert"],
-        cta: "Make bedtime magical ✨",
-      },
+      { id: "starter", name: "Starter", tag: "Best for curious first-timers", price: "$4.99/mo", features: ["Morning game + bedtime story", "Short cozy replies", "Email or WhatsApp"], cta: "Try a week of joyful mornings 🌞" },
+      { id: "family", name: "Family", tag: "Best for families with 1–2 kids", price: "$7.99/mo", features: ["Everything in Starter", "“Bad day?” extra support", "Weekly recap + sibling tweak"], cta: "Start calmer days tonight 🌙", popular: true },
+      { id: "premium", name: "Premium", tag: "Best for story lovers or siblings", price: "$11.99/mo", features: ["Everything in Family", "Calm audio stories", "Seasonal packs + name insert"], cta: "Make bedtime magical ✨" },
     ],
     []
   );
@@ -435,44 +468,19 @@ const Pricing = ({ onStart }) => {
 
         <div className="mt-10 grid md:grid-cols-3 gap-7">
           {plans.map((p) => (
-            <motion.div
-              key={p.id}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className={clsx(
-                "relative rounded-3xl border p-6 text-left sm:text-center shadow-[0_15px_40px_rgba(0,0,0,0.35)] transition duration-300 hover:shadow-[0_20px_60px_rgba(0,0,0,0.45)]",
-                p.popular ? "border-white/15 bg-gradient-to-br from-[#8BA7FF]/90 via-[#D5C0F7]/70 to-[#F5C16E]/90" : "border-white/12 bg-white/6 backdrop-blur-lg"
-              )}
-              onClick={() => onStart(p)}
-              role="button"
-            >
-              {p.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 text-white text-xs font-semibold px-3 py-1 border border-white/20">
-                  ❤️ Most loved by parents
-                </div>
-              )}
+            <motion.div key={p.id} whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 200, damping: 15 }} className={clsx("relative rounded-3xl border p-6 text-left sm:text-center shadow-[0_15px_40px_rgba(0,0,0,0.35)] transition duration-300 hover:shadow-[0_20px_60px_rgba(0,0,0,0.45)]", p.popular ? "border-white/15 bg-gradient-to-br from-[#8BA7FF]/90 via-[#D5C0F7]/70 to-[#F5C16E]/90" : "border-white/12 bg-white/6 backdrop-blur-lg")} onClick={() => onStart(p)} role="button">
+              {p.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 text-white text-xs font-semibold px-3 py-1 border border-white/20">❤️ Most loved by parents</div>}
               <div className="sm:text-center">
                 <h3 className={clsx("text-2xl font-semibold", p.popular && "text-[#12151B]")}>{p.name}</h3>
                 <p className={clsx("text-sm mt-1 italic", p.popular ? "text-[#12151B]/80" : "text-white/70")}>{p.tag}</p>
                 <div className={clsx("text-4xl font-extrabold mt-3", p.popular && "text-[#12151B]")}>{p.price}</div>
               </div>
               <ul className={clsx("mt-4 space-y-2 text-left mx-auto max-w-[22rem]", p.popular ? "text-[#12151B]" : "text-white/90")}>
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-2 items-start justify-start"><span>✓</span><span>{f}</span></li>
-                ))}
+                {p.features.map((f) => (<li key={f} className="flex gap-2 items-start justify-start"><span>✓</span><span>{f}</span></li>))}
               </ul>
-              <p className={clsx("mt-4 text-sm text-center", p.popular ? "text-[#12151B]/85" : "text-white/70")}>
-                Less than a cup of coffee — for calmer mornings and sweeter nights.
-              </p>
-              <button
-                onClick={(e) => { e.stopPropagation(); onStart(p); }}
-                className={clsx("w-full mt-6 rounded-2xl py-3 font-semibold transition text-center", p.popular ? "bg-[#12151B] text-white hover:bg-black" : "bg-white text-gray-900 hover:shadow-md")}
-              >
-                {p.cta}
-              </button>
-              <p className={clsx("mt-3 text-xs text-center", p.popular ? "text-[#12151B]/75" : "text-white/70")}>
-                🛡️ Cancel anytime · 💌 No app needed · ❤️ 97% stay after free week
-              </p>
+              <p className={clsx("mt-4 text-sm text-center", p.popular ? "text-[#12151B]/85" : "text-white/70")}>Less than a cup of coffee — for calmer mornings and sweeter nights.</p>
+              <button onClick={(e) => { e.stopPropagation(); onStart(p); }} className={clsx("w-full mt-6 rounded-2xl py-3 font-semibold transition text-center", p.popular ? "bg-[#12151B] text-white hover:bg-black" : "bg-white text-gray-900 hover:shadow-md")}>{p.cta}</button>
+              <p className={clsx("mt-3 text-xs text-center", p.popular ? "text-[#12151B]/75" : "text-white/70")}>🛡️ Cancel anytime · 💌 No app needed · ❤️ 97% stay after free week</p>
             </motion.div>
           ))}
         </div>
@@ -530,10 +538,9 @@ const DemoModal = ({ open, onClose, onStart }) => (
   </AnimatePresence>
 );
 
-/* ---------------- Signup (masked phone + OTP) ---------------- */
+/* ---------------- Signup Modal (masked phone + OTP + resend) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan }) => {
-  const { dialCode, countryCode, flag } = useCountryDialCode();
-
+  const { dialCode, countryCode } = useCountryDialCode();
   const fmtBase = COUNTRY_FORMATS[countryCode] || COUNTRY_FORMATS.DEFAULT;
   const fmt = { dial: fmtBase.dial || dialCode || "+1", mask: fmtBase.mask, max: fmtBase.max };
   const dialDigits = fmt.dial.replace(/\D/g, "");
@@ -547,14 +554,13 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
-  const [step, setStep] = useState(1);
   const [resendTimer, setResendTimer] = useState(0);
   const popRef = useRef(null);
 
   useEffect(() => {
     if (!open) {
       setPhone(""); setParent(""); setChild(""); setPlanOpen(false); setPlan(defaultPlan?.id ?? "");
-      setSending(false); setOtpSent(false); setOtp(""); setVerified(false); setStep(1); setResendTimer(0);
+      setSending(false); setOtpSent(false); setOtp(""); setVerified(false); setResendTimer(0);
     }
   }, [open, defaultPlan]);
 
@@ -577,13 +583,11 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     for (const d of local) out = out.replace("_", d);
     return out.split("_")[0].trim();
   };
-
   const handlePhoneChange = (e) => {
     const digits = e.target.value.replace(/\D/g, "");
     const local = formatLocal(digits);
     setPhone(`${fmt.dial} ${local}`);
   };
-
   const currentLocalDigits = (() => {
     const digits = phone.replace(/\D/g, "");
     return digits.startsWith(dialDigits) ? digits.slice(dialDigits.length) : digits;
@@ -593,64 +597,38 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const sendOtp = () => {
     if (!isComplete || sending || verified || otpSent) return;
     setSending(true); setOtp("");
-    setTimeout(() => { setSending(false); setOtpSent(true); setStep(2); setResendTimer(30); }, 1200);
+    setTimeout(() => { setSending(false); setOtpSent(true); setResendTimer(30); }, 1200);
   };
-
-  const onEnter = (e) => {
-    if (e.key === "Enter" && isComplete && !sending && !verified && !otpSent) { e.preventDefault(); sendOtp(); }
-  };
-
-  useEffect(() => {
-    if (otpSent && !verified && otp.trim().length === 6) { setVerified(true); setStep(3); }
-  }, [otp, otpSent, verified]);
+  const onEnter = (e) => { if (e.key === "Enter" && isComplete && !sending && !verified && !otpSent) { e.preventDefault(); sendOtp(); } };
+  useEffect(() => { if (otpSent && !verified && otp.trim().length === 6) setVerified(true); }, [otp, otpSent, verified]);
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-          <motion.div
-            className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+          <motion.div className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6"
             style={{ background: "linear-gradient(180deg, rgba(17,27,33,0.96) 0%, rgba(32,44,51,0.96) 100%)" }}
             initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
           >
             <button onClick={onClose} className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/40 border border-white/20 grid place-items-center hover:bg-black/55" aria-label="Close">✕</button>
-            <h3 className="text-2xl md:text-3xl font-extrabold">Start your free week <span className="inline-block ml-1">✨</span></h3>
-            <p className="text-white/85 mt-1">No charge until day 8 · Cancel anytime · Messages via WhatsApp {isoToFlagEmoji(countryCode)}</p>
+            <h3 className="text-2xl md:text-3xl font-extrabold">Start your free week ✨</h3>
+            <p className="text-white/85 mt-1">No charge until day 8 · Cancel anytime · Messages via WhatsApp</p>
 
-            {/* Stepper */}
-            <div className="mt-3 flex items-center gap-2 text-xs text-white/70">
-              {[1,2,3].map((n)=>(
-                <div key={n} className="flex items-center gap-2">
-                  <div className={clsx("w-6 h-6 grid place-items-center rounded-full border", (n <= (verified?3:otpSent?2:1))? "bg-white text-[#12151B] border-white":"border-white/30")}>{n}</div>
-                  {n<3 && <div className="w-6 h-px bg-white/30" />}
-                </div>
-              ))}
-              <div className="ml-2 text-white/70">{verified ? "Details" : otpSent ? "Enter OTP" : "Verify phone"}</div>
-            </div>
-
-            {/* Phone */}
+            {/* Step 1 — phone */}
             <div className="relative mt-5 w-full">
-              <input
-                type="tel"
-                className={clsx("w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 pr-[7.6rem]", (verified||otpSent)&&"opacity-95")}
-                placeholder={`${fmt.dial} ${fmt.mask}`}
-                inputMode="tel"
-                value={phone}
-                onChange={(e)=>{ handlePhoneChange(e); const digits=e.target.value.replace(/\D/g,""); const local=digits.startsWith(dialDigits)?digits.slice(dialDigits.length):digits; if(local.length===fmt.max && !sending && !verified && !otpSent){ sendOtp(); } }}
-                onKeyDown={onEnter}
-                disabled={verified}
-                aria-label="Phone number"
-              />
+              <input type="tel" className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 pr-[7.6rem]"
+                placeholder={`${fmt.dial} ${fmt.mask}`} inputMode="tel" value={phone}
+                onChange={(e) => { handlePhoneChange(e); const digits = e.target.value.replace(/\D/g, ""); const local = digits.startsWith(dialDigits) ? digits.slice(dialDigits.length) : digits; if (local.length === fmt.max && !sending && !otpSent) sendOtp(); }}
+                onKeyDown={onEnter} disabled={verified} aria-label="Phone number" />
               <button
                 className={clsx("absolute top-1/2 -translate-y-1/2 right-1.5 rounded-lg text-sm font-semibold transition px-3 py-1.5 min-w-[110px] flex items-center justify-center",
                   verified ? "bg-white text-[#12151B] cursor-default" :
-                  sending ? "bg-[#12151B] text-white opacity-80" :
-                  otpSent ? "bg-white/15 text-white/60 cursor-not-allowed" :
-                  isComplete ? "bg-[#12151B] hover:bg-black text-white" : "bg-white/15 text-white/60 cursor-not-allowed")}
+                    sending ? "bg-[#12151B] text-white opacity-80" :
+                      otpSent ? "bg-white/15 text-white/60 cursor-not-allowed" :
+                        isComplete ? "bg-[#12151B] hover:bg-black text-white" : "bg-white/15 text-white/60 cursor-not-allowed")}
                 disabled={verified || sending || otpSent || !isComplete}
-                onClick={()=>(!verified && !otpSent ? sendOtp() : null)}
+                onClick={() => (!verified && !otpSent ? sendOtp() : null)}
               >
                 {verified ? "Verified" : sending ? (
                   <motion.svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
@@ -661,39 +639,39 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
               </button>
             </div>
 
-            {/* OTP */}
+            {/* Step 2 — OTP */}
             <AnimatePresence>
               {otpSent && !verified && (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="mt-3">
                   <p className="text-white/80 text-sm">Check WhatsApp — we just sent your 6-digit code.</p>
                   <div className="mt-2 flex flex-col gap-2">
                     <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest text-center"
-                      placeholder="●●●●●●" inputMode="numeric" maxLength={6} value={otp} onChange={(e)=>setOtp(e.target.value.replace(/\D/g,""))} aria-label="OTP code" />
-                    <button type="button" disabled={resendTimer>0} onClick={()=>{
+                      placeholder="●●●●●●" inputMode="numeric" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} aria-label="OTP code" />
+                    <button type="button" disabled={resendTimer > 0} onClick={() => {
                       setOtp(""); setOtpSent(false);
-                      setTimeout(()=>{ setSending(true); setTimeout(()=>{ setSending(false); setOtpSent(true); setResendTimer(30); }, 800); },10);
-                    }} className={clsx("text-xs underline underline-offset-4 self-center", resendTimer>0?"text-white/40 cursor-not-allowed":"text-white/80 hover:text-white")}>
-                      {resendTimer>0 ? `Resend in ${resendTimer}s` : "Didn't get the code? Resend"}
+                      setTimeout(() => { setSending(true); setTimeout(() => { setSending(false); setOtpSent(true); setResendTimer(30); }, 800); }, 10);
+                    }} className={clsx("text-xs underline underline-offset-4 self-center", resendTimer > 0 ? "text-white/40 cursor-not-allowed" : "text-white/80 hover:text-white")}>
+                      {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Didn't get the code? Resend"}
                     </button>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Details */}
+            {/* Step 3 — details */}
             <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
-              <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Parent name" value={parent} onChange={(e)=>setParent(e.target.value)} />
-              <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Child name (optional)" value={child} onChange={(e)=>setChild(e.target.value)} />
+              <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Parent name" value={parent} onChange={(e) => setParent(e.target.value)} />
+              <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Child name (optional)" value={child} onChange={(e) => setChild(e.target.value)} />
 
               <div className="relative" ref={popRef}>
-                <button onClick={()=>setPlanOpen(v=>!v)} className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-left">
-                  {plan ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find(x=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find(x=>x.id===plan)?.price}` : "Select plan"}
+                <button onClick={() => setPlanOpen((v) => !v)} className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-left">
+                  {plan ? `${[{ id: "starter", name: "Starter", price: "$4.99/mo" }, { id: "family", name: "Family", price: "$7.99/mo" }, { id: "premium", name: "Premium", price: "$11.99/mo" }].find((x) => x.id === plan)?.name} · ${[{ id: "starter", name: "Starter", price: "$4.99/mo" }, { id: "family", name: "Family", price: "$7.99/mo" }, { id: "premium", name: "Premium", price: "$11.99/mo" }].find((x) => x.id === plan)?.price}` : "Select plan"}
                 </button>
                 <AnimatePresence>
                   {planOpen && (
                     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
-                      {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt)=>(
-                        <button key={opt.id} onClick={()=>{ setPlan(opt.id); setPlanOpen(false); }} className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2">
+                      {[{ id: "starter", name: "Starter", price: "$4.99/mo" }, { id: "family", name: "Family", price: "$7.99/mo" }, { id: "premium", name: "Premium", price: "$11.99/mo" }].map((opt) => (
+                        <button key={opt.id} onClick={() => { setPlan(opt.id); setPlanOpen(false); }} className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2">
                           <span>{opt.name}</span><span className="text-white/75">{opt.price}</span>
                         </button>
                       ))}
@@ -705,7 +683,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
               <div className="pt-2 flex gap-3">
                 <button className="flex-1 rounded-2xl bg-white text-gray-900 py-3 font-semibold">Get my free week</button>
               </div>
-              <p className="text-white/60 text-xs">By continuing, you agree to receive messages on WhatsApp. You can stop anytime.</p>
+              <p className="text-white/60 text-xs">By continuing, you agree to receive messages on WhatsApp. You can stop anytime by replying STOP.</p>
             </div>
           </motion.div>
         </motion.div>
@@ -750,7 +728,8 @@ export default function App() {
 
   useEffect(() => {
     document.body.style.background = "transparent";
-    document.body.style.fontFamily = "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+    document.body.style.fontFamily =
+      '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
     setIntent(intentFromQuery());
     const onScroll = () => setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
     window.addEventListener("scroll", onScroll);
