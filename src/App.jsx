@@ -3,8 +3,8 @@ import { useAnimationFrame } from "framer-motion";
 
 export default function Header() {
   const ORB = 28;        // orb diameter (matches letter height)
-  const INNER_GAP = 6;   // space between orbs
-  const OUTER_GAP = 8;   // now smaller — tighter to text
+  const INNER_GAP = 6;   // gap between the two orbs
+  const OUTER_GAP = 5;   // tightened spacing to letters
   const SPEED = 0.9;
 
   const orangeRef = useRef(null);
@@ -25,7 +25,6 @@ export default function Header() {
     if (orangeRef.current && blueRef.current) {
       orangeRef.current.style.transform = `translateX(${orangeX}px)`;
       blueRef.current.style.transform = `translateX(${blueX}px)`;
-
       orangeRef.current.style.zIndex = orangeFront ? 2 : 1;
       blueRef.current.style.zIndex = orangeFront ? 1 : 2;
     }
@@ -41,7 +40,7 @@ export default function Header() {
           KID
         </span>
 
-        {/* Orbs group as “OO” */}
+        {/* Animated “OO” pair */}
         <div
           className="relative flex items-center justify-center"
           style={{
@@ -50,6 +49,7 @@ export default function Header() {
             marginRight: `${OUTER_GAP}px`,
           }}
         >
+          {/* Orange orb */}
           <div
             ref={orangeRef}
             className="absolute rounded-full"
@@ -60,6 +60,8 @@ export default function Header() {
                 "radial-gradient(circle at 40% 35%, #FFEAA0 0%, #FFA131 60%, #E27C00 100%)",
             }}
           />
+
+          {/* Blue orb */}
           <div
             ref={blueRef}
             className="absolute rounded-full"
