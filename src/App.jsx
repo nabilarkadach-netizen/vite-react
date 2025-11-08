@@ -1,4 +1,4 @@
-// App.jsx — KIDOOSE Cinematic WhatsApp Dark • iPhone Frame • Typing + Delivery • Full Site
+// App.jsx — KIDOOSE Cinematic Build (3D Tilted Cropped iPhone, Pro Buttons, WhatsApp Dark, Full Site)
 // Requirements: React 18, TailwindCSS, framer-motion, clsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -13,11 +13,10 @@ const PAL = {
   ink: "#12151B",
 };
 
-/* ---------------- Phone / WhatsApp Dark Palette ---------------- */
+/* ---------------- WhatsApp Dark Palette ---------------- */
 const WP = {
   bg: "#0B141A",
   header: "#202C33",
-  doodle: "rgba(255,255,255,0.06)",
   bubbleIn: "#202C33",
   text: "#E9EDEF",
   time: "#8696A0",
@@ -25,7 +24,7 @@ const WP = {
   tickBlue: "#53BDEB",
 };
 
-/* ---------------- Country & Dial Helpers ---------------- */
+/* ---------------- Country / Dial Helpers ---------------- */
 const COUNTRY_FORMATS = {
   US: { dial: "+1", mask: "--- --- ----", max: 10 },
   CA: { dial: "+1", mask: "--- --- ----", max: 10 },
@@ -52,19 +51,18 @@ const COUNTRY_FORMATS = {
 const isoToFlagEmoji = (iso2) =>
   iso2 ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt())) : "🌍";
 
-/* ---------------- Intent From URL ---------------- */
+/* ---------------- URL Intent ---------------- */
 const intentFromQuery = () => {
-  const params = new URLSearchParams(window.location.search);
-  const raw = (params.get("utm_term") || params.get("q") || "").toLowerCase();
+  const p = new URLSearchParams(window.location.search);
+  const raw = (p.get("utm_term") || p.get("q") || "").toLowerCase();
   if (raw.includes("bedtime")) return "bedtime";
-  if (raw.includes("activity") || raw.includes("activities") || raw.includes("kids activities")) return "activities";
-  if (raw.includes("morning")) return "morning";
+  if (raw.includes("activity") || raw.includes("activities") || raw.includes("morning")) return "activities";
   return "default";
 };
 const COPY = {
   bedtime: {
     h1: "Bedtime stories that make nights easier — starting tonight.",
-    sub: "Delivered on WhatsApp at 7pm in your timezone. No app. Cancel anytime.",
+    sub: "WhatsApp at 7pm in your timezone. No app. Cancel anytime.",
     primary: "See tonight’s sample",
     secondary: "Start free week",
   },
@@ -72,12 +70,6 @@ const COPY = {
     h1: "2–5 minute morning play ideas using what you already have.",
     sub: "WhatsApp at 9am & 7pm. No app. Cancel anytime.",
     primary: "See today’s activity",
-    secondary: "Start free week",
-  },
-  morning: {
-    h1: "Quick, joyful morning sparks for calmer school runs.",
-    sub: "We’ll WhatsApp you at 9am & 7pm. No app. Cancel anytime.",
-    primary: "See a morning spark",
     secondary: "Start free week",
   },
   default: {
@@ -88,7 +80,7 @@ const COPY = {
   },
 };
 
-/* ---------------- Hook: Detect Country ---------------- */
+/* ---------------- Country Hook ---------------- */
 const useCountryDialCode = () => {
   const [dialCode, setDialCode] = useState("+1");
   const [countryCode, setCountryCode] = useState("US");
@@ -97,9 +89,9 @@ const useCountryDialCode = () => {
     let active = true;
     fetch("https://ipapi.co/json/")
       .then((r) => r.json())
-      .then((data) => {
+      .then((d) => {
         if (!active) return;
-        const iso = (data?.country_code || "US").toUpperCase();
+        const iso = (d?.country_code || "US").toUpperCase();
         const fmt = COUNTRY_FORMATS[iso] || COUNTRY_FORMATS.DEFAULT;
         setCountryCode(iso);
         setDialCode(fmt.dial);
@@ -110,7 +102,7 @@ const useCountryDialCode = () => {
         setDialCode("+1");
         setFlag("🇺🇸");
       });
-    return () => { active = false; };
+    return () => (active = false);
   }, []);
   return { dialCode, countryCode, flag };
 };
@@ -174,16 +166,31 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
   </header>
 );
 
-/* ---------------- iPhone Frame ---------------- */
+/* ---------------- Inline SVG Icons ---------------- */
+const Icon = {
+  Back: (p) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Phone: (p) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.8 12.8 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.8 12.8 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Video: (p) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M23 7l-7 5 7 5V7z" fill="currentColor"/><rect x="1" y="5" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.6"/></svg>,
+  Plus: (p) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
+  Mic: (p) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}><rect x="9" y="3" width="6" height="10" rx="3" stroke="currentColor" strokeWidth="1.6"/><path d="M5 12a7 7 0 0 0 14 0M12 19v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  Checks: ({ color = WP.tickGray }) => (
+    <svg width="20" height="14" viewBox="0 0 30 20" fill="none">
+      <path d="M11 11l2 2 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M5 11l2 2 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+};
+
+/* ---------------- iPhone Frame (¾ crop, 3D tilt, protruding buttons) ---------------- */
 const IPhoneFrame = ({ children }) => {
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
-  const rotateX = useTransform(tiltY, [-30, 30], [3, -3]);
-  const rotateY = useTransform(tiltX, [-30, 30], [-2, 2]);
+  const rotateX = useTransform(tiltY, [-30, 30], [2, -2]);  // slight 3D
+  const rotateY = useTransform(tiltX, [-30, 30], [-3, 3]);
 
   return (
     <motion.div
-      className="relative mx-auto w-[360px] sm:w-[380px]"
+      className="relative mx-auto w-[360px] sm:w-[390px]"
       style={{ perspective: 900 }}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
@@ -194,84 +201,64 @@ const IPhoneFrame = ({ children }) => {
     >
       <motion.div
         style={{ rotateX, rotateY }}
-        className="relative rounded-[46px] bg-[#0A0A0A] shadow-[0_35px_80px_rgba(0,0,0,0.55)]"
+        className="relative rounded-[42px] shadow-[0_35px_80px_rgba(0,0,0,0.55)]"
       >
-        <div className="relative rounded-[46px] border-[10px] border-black/90">
-          {/* Bezel shine */}
-          <div className="pointer-events-none absolute inset-0 rounded-[36px] [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
-          {/* Notch */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 h-8 w-44 bg-black/90 rounded-b-2xl z-20" />
-          {/* Buttons */}
-          <div className="absolute -left-1 top-28 h-8 w-1 rounded-r bg-neutral-800" />
-          <div className="absolute -left-1 top-44 h-12 w-1 rounded-r bg-neutral-800" />
-          <div className="absolute -right-1 top-36 h-16 w-1 rounded-l bg-neutral-800" />
-          {/* Screen (half height for density) */}
-          <div className="relative h-[480px] rounded-[36px] overflow-hidden" style={{ background: WP.bg }}>
-            {/* Doodle wallpaper (vector-ish) */}
-            <div
-              className="absolute inset-0 opacity-[0.07]"
-              style={{
-                backgroundImage:
-                  `radial-gradient(${WP.doodle} 1px, transparent 1px)`,
-                backgroundSize: "22px 22px",
-              }}
-            />
-            {/* Moving reflection */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  "linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.0) 35%, rgba(255,255,255,0.12) 60%, rgba(255,255,255,0) 100%)",
-                mixBlendMode: "overlay",
-                opacity: 0.08,
-              }}
+        {/* Metallic frame */}
+        <div className="relative rounded-[42px] p-[10px]"
+          style={{
+            background:
+              "linear-gradient(180deg, #5A6167, #2E3338 45%, #1C2024)",
+          }}
+        >
+          {/* Protruding side buttons */}
+          <div className="absolute right-[-3px] top-[110px] w-[4px] h-[38px] rounded-r-md"
+               style={{ background: "linear-gradient(180deg,#586066,#2E3338)" }} />
+          <div className="absolute right-[-3px] top-[162px] w-[4px] h-[58px] rounded-r-md"
+               style={{ background: "linear-gradient(180deg,#586066,#2E3338)" }} />
+          <div className="absolute left-[-3px] top-[140px] w-[4px] h-[60px] rounded-l-md"
+               style={{ background: "linear-gradient(180deg,#586066,#2E3338)" }} />
+
+          {/* Screen container — CROPPED HEIGHT */}
+          <div className="relative h-[440px] rounded-[32px] overflow-hidden"
+               style={{ background: WP.bg }}>
+            {/* Notch */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 h-8 w-44 bg-black/90 rounded-b-2xl z-20 shadow-[0_6px_12px_rgba(0,0,0,0.35)]" />
+            {/* Doodle-ish wallpaper */}
+            <div className="absolute inset-0 opacity-[0.07]"
+                 style={{ backgroundImage: `radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)`,
+                          backgroundSize: "22px 22px" }} />
+            {/* Moving glass reflection */}
+            <motion.div className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(120deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 35%, rgba(255,255,255,0.12) 60%, rgba(255,255,255,0) 100%)", mixBlendMode: "overlay", opacity: 0.08 }}
               animate={{ backgroundPosition: ["-40% -40%", "140% 140%"] }}
               transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
             />
-            {/* Inner content */}
             <div className="relative z-10 h-full">{children}</div>
+
+            {/* Bottom crop fade into page */}
+            <div className="pointer-events-none absolute -bottom-8 left-0 right-0 h-24"
+                 style={{ background: "linear-gradient(to bottom, rgba(11,20,26,0), rgba(11,20,26,0.75) 45%, rgba(11,20,26,0))" }} />
           </div>
         </div>
+
+        {/* Soft shadow beneath cropped phone */}
+        <div className="absolute -bottom-6 left-0 right-0 h-10 blur-2xl opacity-50"
+             style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(0,0,0,0.45), transparent)" }} />
       </motion.div>
     </motion.div>
   );
 };
 
-/* ---------------- WhatsApp Icons (inline SVG to avoid deps) ---------------- */
-const Icon = {
-  Back: (p) => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-  ),
-  Phone: (p) => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.8 12.8 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.8 12.8 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-  ),
-  Video: (p) => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}><path d="M23 7l-7 5 7 5V7z" fill="currentColor"/><rect x="1" y="5" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.6"/></svg>
-  ),
-  Plus: (p) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-  ),
-  Mic: (p) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}><rect x="9" y="3" width="6" height="10" rx="3" stroke="currentColor" strokeWidth="1.6"/><path d="M5 12a7 7 0 0 0 14 0M12 19v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-  ),
-  Checks: ({ color = WP.tickGray }) => (
-    <svg width="20" height="14" viewBox="0 0 30 20" fill="none">
-      <path d="M11 11l2 2 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M5 11l2 2 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-};
-
-/* ---------------- WhatsApp Dark Chat (Kidoose only) ---------------- */
+/* ---------------- WhatsApp Chat ---------------- */
 const WhatsAppDarkChat = () => {
-  const [phase, setPhase] = useState("typing1"); // typing1 -> msg1 -> typing2 -> msg2
+  const [phase, setPhase] = useState("typing1");
   const [checksBlue1, setChecksBlue1] = useState(false);
   const [checksBlue2, setChecksBlue2] = useState(false);
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setPhase("msg1"), 1500),
-      setTimeout(() => setChecksBlue1(true), 2600),
+      setTimeout(() => setPhase("msg1"), 1400),
+      setTimeout(() => setChecksBlue1(true), 2500),
       setTimeout(() => setPhase("typing2"), 3200),
       setTimeout(() => setPhase("msg2"), 5200),
       setTimeout(() => setChecksBlue2(true), 6400),
@@ -291,17 +278,17 @@ const WhatsAppDarkChat = () => {
     </div>
   );
 
-  const BubbleIn = ({ children, time = "09:00", blueChecks = false }) => (
-    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 140, damping: 16 }} className="w-full flex items-start">
-      <div className="relative ml-2 mt-2 max-w-[85%] px-3.5 py-2.5 rounded-[18px] rounded-tl-[6px] shadow-sm border border-white/5" style={{ background: WP.bubbleIn }}>
-        {/* bubble tail */}
-        <div className="absolute -left-1 bottom-2 w-2 h-2 rounded-bl-md" style={{ background: WP.bubbleIn, transform: "rotate(45deg)" }} />
+  const BubbleIn = ({ children, time = "9:02 AM", blueChecks = false }) => (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 140, damping: 16 }} className="w-full flex items-start">
+      <div className="relative ml-2 mt-2 max-w-[85%] px-3.5 py-2.5 rounded-[18px] rounded-tl-[6px] shadow-sm border border-white/5"
+           style={{ background: WP.bubbleIn }}>
+        <div className="absolute -left-1 bottom-2 w-2 h-2 rounded-bl-md"
+             style={{ background: WP.bubbleIn, transform: "rotate(45deg)" }} />
         <div className="text-[15px] leading-snug" style={{ color: WP.text }}>{children}</div>
         <div className="mt-1.5 flex items-center justify-end gap-1">
           <span className="text-[11px]" style={{ color: WP.time }}>{time}</span>
-          <span className="scale-75 translate-y-[1px]">
-            <Icon.Checks color={blueChecks ? WP.tickBlue : WP.tickGray} />
-          </span>
+          <span className="scale-75 translate-y-[1px]"><Icon.Checks color={blueChecks ? WP.tickBlue : WP.tickGray} /></span>
         </div>
       </div>
     </motion.div>
@@ -311,7 +298,8 @@ const WhatsAppDarkChat = () => {
     <IPhoneFrame>
       {/* Header */}
       <div className="sticky top-0 z-20" style={{ background: WP.header }}>
-        <div className="h-12 border-b border-black/40 flex items-center gap-2 px-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont,"SF Pro Text","Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+        <div className="h-12 border-b border-black/40 flex items-center gap-2 px-3"
+             style={{ fontFamily: '-apple-system, BlinkMacSystemFont,"SF Pro Text","Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
           <Icon.Back className="text-white/80" />
           <div className="w-7 h-7 rounded-full bg-[#2B3A40]" />
           <div className="flex-1 leading-tight">
@@ -326,26 +314,25 @@ const WhatsAppDarkChat = () => {
       </div>
 
       {/* Messages */}
-      <div className="px-2 pb-[64px] pt-2 overflow-y-auto h-[420px]">
-        {(phase === "typing1") && <Typing />}
+      <div className="px-2 pb-6 pt-2 overflow-y-auto h-[380px]">
+        {phase === "typing1" && <Typing />}
         {(phase === "msg1" || phase === "typing2" || phase === "msg2") && (
           <BubbleIn time="9:02 AM" blueChecks={checksBlue1}>
-            🌞 <strong>Morning Play</strong>: Roll two socks into a soft ball and play a mini toss game together.  
-            Count five catches, then high-five and pick a silly team name.  
-            2–3 minutes, big smiles before school.
+            🌞 <strong>Morning Play</strong>: Roll two socks into a soft ball and play a mini toss game together.
+            Count five catches, then high-five and pick a silly team name. 2–3 minutes, big smiles before school.
           </BubbleIn>
         )}
-        {(phase === "typing2") && <Typing />}
-        {(phase === "msg2") && (
+        {phase === "typing2" && <Typing />}
+        {phase === "msg2" && (
           <BubbleIn time="7:00 PM" blueChecks={checksBlue2}>
-            🌙 <strong>Bedtime</strong>: “Under the sleepy moon, Milo whispered to the stars.  
-            One winked back and said, ‘Close your eyes, little one — the world will wait.’  
+            🌙 <strong>Bedtime</strong>: “Under the sleepy moon, Milo whispered to the stars.
+            One winked back and said, ‘Close your eyes, little one — the world will wait.’
             Mama kissed his forehead and the night hummed a gentle lullaby…”
           </BubbleIn>
         )}
       </div>
 
-      {/* Composer (disabled look) */}
+      {/* Composer (disabled) */}
       <div className="absolute bottom-0 left-0 right-0 px-2 py-2 border-t border-black/40" style={{ background: WP.header }}>
         <div className="flex items-center gap-2">
           <Icon.Plus className="text-white/50" />
@@ -520,13 +507,12 @@ const FAQ = () => (
 const DemoModal = ({ open, onClose, onStart }) => (
   <AnimatePresence>
     {open && (
-      <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-        <motion.div
-          className="relative w-full max-w-[90vw] sm:max-w-[420px] md:max-w-[520px] rounded-3xl border border-white/12 p-4 md:p-6 text-white"
+        <motion.div className="relative w-full max-w-[90vw] sm:max-w-[420px] md:max-w-[520px] rounded-3xl border border-white/12 p-4 md:p-6 text-white"
           style={{ background: "linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(32,44,51,0.98) 100%)" }}
-          initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
-        >
+          initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
           <button onClick={onClose} className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/40 border border-white/20 grid place-items-center hover:bg-black/55" aria-label="Close">✕</button>
           <div className="mx-auto grid place-items-center"><WhatsAppDarkChat /></div>
           <div className="mt-4 md:mt-6 flex justify-center">
@@ -538,7 +524,7 @@ const DemoModal = ({ open, onClose, onStart }) => (
   </AnimatePresence>
 );
 
-/* ---------------- Signup Modal (masked phone + OTP + resend) ---------------- */
+/* ---------------- Sign Up Modal (masked phone + OTP) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const { dialCode, countryCode } = useCountryDialCode();
   const fmtBase = COUNTRY_FORMATS[countryCode] || COUNTRY_FORMATS.DEFAULT;
@@ -576,8 +562,8 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     return () => clearInterval(id);
   }, [otpSent, resendTimer]);
 
-  const formatLocal = (allDigits) => {
-    let local = allDigits.startsWith(dialDigits) ? allDigits.slice(dialDigits.length) : allDigits;
+  const formatLocal = (digitsAll) => {
+    let local = digitsAll.startsWith(dialDigits) ? digitsAll.slice(dialDigits.length) : digitsAll;
     local = local.slice(0, fmt.max);
     let out = fmt.mask.replace(/[0-9]/g, "_");
     for (const d of local) out = out.replace("_", d);
@@ -606,7 +592,8 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     <AnimatePresence>
       {open && (
         <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
           <motion.div className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6"
             style={{ background: "linear-gradient(180deg, rgba(17,27,33,0.96) 0%, rgba(32,44,51,0.96) 100%)" }}
             initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
@@ -615,14 +602,15 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
             <h3 className="text-2xl md:text-3xl font-extrabold">Start your free week ✨</h3>
             <p className="text-white/85 mt-1">No charge until day 8 · Cancel anytime · Messages via WhatsApp</p>
 
-            {/* Step 1 — phone */}
+            {/* phone */}
             <div className="relative mt-5 w-full">
               <input type="tel" className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 pr-[7.6rem]"
                 placeholder={`${fmt.dial} ${fmt.mask}`} inputMode="tel" value={phone}
                 onChange={(e) => { handlePhoneChange(e); const digits = e.target.value.replace(/\D/g, ""); const local = digits.startsWith(dialDigits) ? digits.slice(dialDigits.length) : digits; if (local.length === fmt.max && !sending && !otpSent) sendOtp(); }}
                 onKeyDown={onEnter} disabled={verified} aria-label="Phone number" />
               <button
-                className={clsx("absolute top-1/2 -translate-y-1/2 right-1.5 rounded-lg text-sm font-semibold transition px-3 py-1.5 min-w-[110px] flex items-center justify-center",
+                className={clsx(
+                  "absolute top-1/2 -translate-y-1/2 right-1.5 rounded-lg text-sm font-semibold transition px-3 py-1.5 min-w-[110px] flex items-center justify-center",
                   verified ? "bg-white text-[#12151B] cursor-default" :
                     sending ? "bg-[#12151B] text-white opacity-80" :
                       otpSent ? "bg-white/15 text-white/60 cursor-not-allowed" :
@@ -639,14 +627,13 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
               </button>
             </div>
 
-            {/* Step 2 — OTP */}
+            {/* OTP */}
             <AnimatePresence>
               {otpSent && !verified && (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="mt-3">
                   <p className="text-white/80 text-sm">Check WhatsApp — we just sent your 6-digit code.</p>
                   <div className="mt-2 flex flex-col gap-2">
-                    <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest text-center"
-                      placeholder="●●●●●●" inputMode="numeric" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} aria-label="OTP code" />
+                    <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest text-center" placeholder="●●●●●●" inputMode="numeric" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} aria-label="OTP code" />
                     <button type="button" disabled={resendTimer > 0} onClick={() => {
                       setOtp(""); setOtpSent(false);
                       setTimeout(() => { setSending(true); setTimeout(() => { setSending(false); setOtpSent(true); setResendTimer(30); }, 800); }, 10);
@@ -658,7 +645,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
               )}
             </AnimatePresence>
 
-            {/* Step 3 — details */}
+            {/* Details */}
             <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
               <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Parent name" value={parent} onChange={(e) => setParent(e.target.value)} />
               <input className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30" placeholder="Child name (optional)" value={child} onChange={(e) => setChild(e.target.value)} />
@@ -705,7 +692,7 @@ const Footer = () => (
 
 /* ---------------- Sticky Mobile CTA ---------------- */
 const StickyMobileCTA = ({ onPrimary, onDemo, intent }) => {
-  const label = (i) => (i === "bedtime" ? "Tonight’s story" : i === "activities" || i === "morning" ? "Today’s activity" : "Sample");
+  const label = (i) => (i === "bedtime" ? "Tonight’s story" : i === "activities" ? "Today’s activity" : "Sample");
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
       <div className="mx-auto max-w-6xl">
