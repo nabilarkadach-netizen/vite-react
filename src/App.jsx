@@ -1,6 +1,5 @@
-// App.jsx — KIDOOSE USA Edition (Full cinematic build + LocalGreeting + Sample Mode)
+// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Scroll-to-Top Orb)
 // Requirements: React 18, Tailwind, framer-motion, clsx
-// This file is self-contained. Paste as-is.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -58,7 +57,6 @@ const useCountryDialCode = () => {
       .then((r) => r.json())
       .then(() => {
         if (!active) return;
-        // For early launch, force USA defaults even if IP is not US.
         setCountryCode("US");
         setDialCode("+1");
         setFlag("🇺🇸");
@@ -197,14 +195,13 @@ const Header = ({ onPrimary, onSample, showButtons }) => (
 );
 
 /* ========================================================================== */
-/* =================== WhatsApp Replica (exactly like your base) ============ */
+/* =================== WhatsApp Replica (scripted demo) ===================== */
 /* ========================================================================== */
 
 /* ---------- Status Bar ---------- */
 const Clock = ({ time }) => (
   <span className="text-white text-[13px] font-[500] tracking-tight leading-none">{time}</span>
 );
-
 const SignalIcon = () => (
   <svg width="22" height="11" viewBox="0 0 22 11" className="text-white">
     {[7, 5, 3, 1, 0].map((y, i) => (
@@ -212,7 +209,6 @@ const SignalIcon = () => (
     ))}
   </svg>
 );
-
 const WifiIcon = () => (
   <svg width="20" height="14" viewBox="0 0 20 14" fill="none" className="text-white">
     <path
@@ -225,7 +221,6 @@ const WifiIcon = () => (
     />
   </svg>
 );
-
 const BatteryIcon = ({ level = 0.8 }) => (
   <svg width="27" height="13" viewBox="0 0 27 13" fill="none" className="text-white">
     <rect x="1" y="2" width="22" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
@@ -303,7 +298,7 @@ const useIosClock = () => {
   return time;
 };
 
-/* ---------- WhatsAppDemo (scripted: typing → msg1 → typing → msg2) ---------- */
+/* ---------- WhatsAppDemo (typing → msg1 → typing → msg2) ---------- */
 const WhatsAppDemo = () => {
   const time = useIosClock();
   const [battery] = useState(0.82);
@@ -419,7 +414,7 @@ const WhatsAppDemo = () => {
 
 /* ---------------- Hero ---------------- */
 const Hero = ({ onPrimary, onSample }) => (
-  <section className="text-white text-center pt-16 md:pt-20 pb-10 px-6">
+  <section id="hero-section" className="text-white text-center pt-16 md:pt-20 pb-24 md:pb-20 px-6">
     <div className="max-w-4xl mx-auto">
       <p className="text-white/70 text-sm md:text-base">From two parents who wanted calmer, happier days.</p>
       <h1 className="mt-2 text-4xl md:text-6xl font-extrabold leading-tight">
@@ -452,7 +447,7 @@ const Hero = ({ onPrimary, onSample }) => (
       <p className="mt-4 text-white/75 italic">No charge until your free week ends · Cancel anytime</p>
 
       {/* Trust strip + badges */}
-      <div className="mt-4 flex flex-col items-center gap-1 text-white/70 text-sm">
+      <div className="mt-5 flex flex-col items-center gap-1 text-white/70 text-sm">
         <div>Trusted by 1,200+ parents · 97% stay after the free week</div>
         <div className="flex items-center gap-3 opacity-90">
           <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">WhatsApp-first</span>
@@ -461,7 +456,7 @@ const Hero = ({ onPrimary, onSample }) => (
         </div>
       </div>
 
-      <div className="mt-8 flex justify-center pb-20 sm:pb-0">
+      <div className="mt-10 flex justify-center pb-6 sm:pb-0">
         <WhatsAppDemo />
       </div>
     </div>
@@ -644,22 +639,6 @@ const Footer = () => (
   </footer>
 );
 
-/* ---------------- Sticky Mobile CTA ---------------- */
-const StickyMobileCTA = ({ onPrimary, onSample }) => (
-  <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-    <div className="mx-auto max-w-6xl">
-      <div className="m-3 rounded-2xl border border-white/15 bg-black/60 backdrop-blur-lg p-2 flex items-center gap-2">
-        <button onClick={onSample} className="flex-1 rounded-xl border border-white/25 bg-white/5 text-white px-3 py-2 font-semibold">
-          Sample
-        </button>
-        <button onClick={onPrimary} className="flex-1 rounded-xl bg-white text-gray-900 px-3 py-2 font-semibold">
-          Free week
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
 /* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer, sample/trial modes) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTrial }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
@@ -737,7 +716,6 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
     if (!isComplete || sending || verified || otpSent) return;
     setSending(true);
     setOtp("");
-    // Simulated network → replace with real API
     setTimeout(() => {
       setSending(false);
       setOtpSent(true);
@@ -759,8 +737,6 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
     }
   }, [otp, otpSent, verified]);
 
-  // SAMPLE MODE: after verification, show success card & upsell (skip plan)
-  // TRIAL MODE: after verification, unlock details & plan select (normal)
   const planList = [
     { id: "starter", name: "Starter", price: "$4.99/mo" },
     { id: "family", name: "Family", price: "$7.99/mo" },
@@ -814,8 +790,6 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                   <div
                     className={clsx(
                       "w-6 h-6 grid place-items-center rounded-full border",
-                      // For sample mode, steps are Verify (1→2) then Success (3)
-                      // For trial mode, steps are Verify (1→2) then Details (3)
                       (n <= (verified ? 3 : otpSent ? 2 : 1)) ? "bg-white text-[#12151B] border-white" : "border-white/30"
                     )}
                   >
@@ -912,7 +886,6 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                       type="button"
                       disabled={resendTimer > 0}
                       onClick={() => {
-                        // Resend only via this link (not the main button)
                         setOtp("");
                         setOtpSent(false);
                         setTimeout(() => {
@@ -944,10 +917,9 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-4 rounded-xl border border-white/20 bg-white/10 p-4 relative overflow-hidden"
               >
-                {/* subtle confetti-ish sparkles */}
                 <motion.div
                   className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-30"
-                  style={{ background: "radial-gradient(closest-side, #F5C16E, transparent)" }}
+                  style={{ background: "radial-gradient(closest-side, #83A3FF, transparent)" }}
                   animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.35, 0.25] }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
                 />
@@ -956,7 +928,6 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                 <button
                   className="mt-3 w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold"
                   onClick={() => {
-                    // Close and reopen in trial mode (App controls this)
                     if (onSwitchToTrial) onSwitchToTrial();
                   }}
                 >
@@ -991,7 +962,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                     aria-haspopup="listbox"
                     aria-expanded={planOpen}
                   >
-                    {plan ? `${planList.find((x) => x.id === plan)?.name} · ${planList.find((x) => x.id === plan)?.price}` : "Select plan"}
+                    {plan ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.price}` : "Select plan"}
                   </button>
 
                   <AnimatePresence>
@@ -1003,7 +974,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                         className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
                         role="listbox"
                       >
-                        {planList.map((opt) => (
+                        {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt) => (
                           <button
                             key={opt.id}
                             onClick={() => {
@@ -1037,12 +1008,46 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
   );
 };
 
+/* ---------------- Scroll-to-Top Gradient Orb (mobile only) ---------------- */
+const ScrollToTopOrb = ({ show }) => (
+  <AnimatePresence>
+    {show && (
+      <motion.button
+        key="orb"
+        initial={{ opacity: 0, y: 24, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.9 }}
+        transition={{ duration: 0.3 }}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Go to top"
+        className="md:hidden fixed bottom-5 right-5 z-50 rounded-full w-14 h-14 shadow-[0_8px_28px_rgba(0,0,0,0.45)] ring-1 ring-white/20 backdrop-blur-xl"
+        style={{
+          background:
+            "conic-gradient(from 160deg at 50% 50%, #EAF0FF, #83A3FF 35%, #5E7AFF 70%, #355BFF 100%)",
+        }}
+      >
+        <motion.span
+          className="inline-block"
+          initial={false}
+          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.06 }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" className="mx-auto">
+            <path d="M12 5l-7 7h14l-7-7z" fill="white" />
+          </svg>
+        </motion.span>
+      </motion.button>
+    )}
+  </AnimatePresence>
+);
+
 /* ---------------- App Root ---------------- */
 export default function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [chosenPlan, setChosenPlan] = useState(null);
   const [signupMode, setSignupMode] = useState("trial"); // "trial" | "sample"
   const [showHeaderButtons, setShowHeaderButtons] = useState(false);
+  const [showTopOrb, setShowTopOrb] = useState(false);
 
   useEffect(() => {
     document.body.style.background = "transparent";
@@ -1050,7 +1055,12 @@ export default function App() {
 
     const onScroll = () => {
       setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
+
+      const hero = document.getElementById("hero-section");
+      const heroH = hero?.offsetHeight || 600;
+      setShowTopOrb(window.scrollY > heroH * 0.8); // orb appears after most of hero
     };
+    onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -1097,17 +1107,8 @@ export default function App() {
 
       <Footer />
 
-      {/* Sticky CTA on mobile */}
-      <StickyMobileCTA
-        onPrimary={() => {
-          setSignupMode("trial");
-          setShowSignup(true);
-        }}
-        onSample={() => {
-          setSignupMode("sample");
-          setShowSignup(true);
-        }}
-      />
+      {/* Scroll-to-Top Orb (mobile) */}
+      <ScrollToTopOrb show={showTopOrb} />
 
       {/* SignUp Modal — supports both modes */}
       <SignUpModal
@@ -1116,7 +1117,6 @@ export default function App() {
         defaultPlan={chosenPlan}
         mode={signupMode}
         onSwitchToTrial={() => {
-          // called after sample success → reopen in trial mode
           setShowSignup(false);
           setTimeout(() => {
             setSignupMode("trial");
