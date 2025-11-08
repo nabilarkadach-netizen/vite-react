@@ -1,4 +1,4 @@
-// App.jsx — WhatsApp Dark Replica (true iPhone layout + natural typing indicator)
+// App.jsx — Full WhatsApp Replica (Dark iPhone Layout + Typing Flow + Polished Composer)
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,7 +28,7 @@ const WifiIcon = () => (
   </svg>
 );
 
-const BatteryIcon = ({ level = 0.75 }) => (
+const BatteryIcon = ({ level = 0.8 }) => (
   <svg width="27" height="13" viewBox="0 0 27 13" fill="none" className="text-white">
     <rect x="1" y="2" width="22" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
     <rect x="24" y="4" width="2" height="5" rx="1" fill="currentColor" />
