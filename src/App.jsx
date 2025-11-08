@@ -1,4 +1,4 @@
-// App.jsx — KIDOOSE USA Edition (Cinematic + LocalGreeting + Sample Mode + Scroll-to-Top Orb + Persistent Phone Memory + Plan Dropdown Fix)
+// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Scroll-to-Top Orb + Persistent Phone Memory)
 // Requirements: React 18, Tailwind, framer-motion, clsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -316,7 +316,6 @@ const useIosClock = () => {
 /* ---------- WhatsAppDemo (typing → msg1 → typing → msg2) ---------- */
 const WhatsAppDemo = () => {
   const time = useIosClock();
-  the
   const [battery] = useState(0.82);
   const [stage, setStage] = useState(0); // 0 typing, 1 msg1, 2 typing again, 3 msg2
 
@@ -655,7 +654,7 @@ const Footer = () => (
   </footer>
 );
 
-/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend, sample/trial modes, persistent phone) ---------------- */
+/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer, sample/trial modes, persistent phone) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTrial }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
 
@@ -676,7 +675,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
   const [persisted, setPersisted] = useState(null);
   const popRef = useRef(null);
 
-  // On mode open: if trial and we have a stored verified phone, prefill & mark verified
+  // On first open or when mode changes: if trial and we have a stored verified phone, prefill & mark verified
   useEffect(() => {
     const stored = getVerifiedPhone();
     if (mode === "trial" && stored?.phone) {
@@ -788,7 +787,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
           }}
         >
           <motion.div
-            className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6 overflow-visible" // <— fix cropping
+            className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6 overflow-hidden"
             style={{
               background: "linear-gradient(180deg, rgba(17,27,33,0.96) 0%, rgba(32,44,51,0.96) 100%)",
             }}
@@ -1013,7 +1012,7 @@ const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTri
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 6 }}
-                        className="absolute z-50 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.95)] backdrop-blur-2xl p-2 shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
+                        className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
                         role="listbox"
                       >
                         {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt) => (
