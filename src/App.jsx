@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } f
 
 export default function Header() {
   const GAP_PX = 6;
-
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
       <div className="flex items-center select-none" style={{ columnGap: `${GAP_PX}px` }}>
@@ -26,22 +25,20 @@ function CuteEyes({ gap }) {
   const rightWrap = useRef(null);
   const leftPupil = useRef(null);
   const rightPupil = useRef(null);
-
   const leftAPI = useRef(null);
   const rightAPI = useRef(null);
 
-  // Track mouse
   useEffect(() => {
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", handle);
     return () => window.removeEventListener("mousemove", handle);
   }, []);
 
-  // Independent pupil motion
+  // pupil motion
   useEffect(() => {
     let raf;
     const move = () => {
-      const update = (wrap, pupil) => {
+      const moveEye = (wrap, pupil) => {
         if (!wrap || !pupil) return;
         const r = wrap.getBoundingClientRect();
         const cx = r.left + r.width / 2;
@@ -53,27 +50,27 @@ function CuteEyes({ gap }) {
         const ny = (dy / len) * LIMIT;
         pupil.style.transform = `translate(${nx}px, ${ny}px)`;
       };
-      update(leftWrap.current, leftPupil.current);
-      update(rightWrap.current, rightPupil.current);
+      moveEye(leftWrap.current, leftPupil.current);
+      moveEye(rightWrap.current, rightPupil.current);
       raf = requestAnimationFrame(move);
     };
     move();
     return () => cancelAnimationFrame(raf);
   }, [mouse]);
 
-  // --- RANDOM BLINK SYSTEM ---
+  // random blink loop
   useEffect(() => {
-    let timer;
+    let t;
     const blinkLoop = () => {
-      const delay = 1800 + Math.random() * 1500; // 1.8–3.3s
-      timer = setTimeout(() => {
+      const delay = 1800 + Math.random() * 1500;
+      t = setTimeout(() => {
         leftAPI.current?.blink();
         rightAPI.current?.blink();
         blinkLoop();
       }, delay);
     };
     blinkLoop();
-    return () => clearTimeout(timer);
+    return () => clearTimeout(t);
   }, []);
 
   return (
@@ -85,15 +82,30 @@ function CuteEyes({ gap }) {
   );
 }
 
-/* -------------------- Single Eye -------------------- */
+/* -------------------- Eye -------------------- */
 const Eye = forwardRef(function Eye({ size, pupil, wrapRef, pupilRef, apiRef }, ref) {
-  const [lid, setLid] = useState(1); // 1=open, 0.05=closed
+  const lidRef = useRef(1);
+  const [lidValue, setLidValue] = useState(1);
 
-  // Expose blink() to parent
+  // Smooth eyelid interpolator
+  useEffect(() => {
+    let raf;
+    const animate = () => {
+      setLidValue((v) => {
+        const target = lidRef.current;
+        const next = v + (target - v) * 0.25; // smooth lerp
+        return Math.abs(next - target) < 0.001 ? target : next;
+      });
+      raf = requestAnimationFrame(animate);
+    };
+    animate();
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   useImperativeHandle(apiRef, () => ({
     blink: () => {
-      setLid(0.05);               // close
-      setTimeout(() => setLid(1), 120); // reopen
+      lidRef.current = 0.05; // close
+      setTimeout(() => (lidRef.current = 1), 150); // open
     },
   }));
 
@@ -110,17 +122,15 @@ const Eye = forwardRef(function Eye({ size, pupil, wrapRef, pupilRef, apiRef }, 
           "inset 0 -2px 1px rgba(0,0,0,0.08), 0 2px 3px rgba(0,0,0,0.15)",
       }}
     >
-      {/* Eyelid */}
+      {/* eyelid */}
       <div
         className="absolute inset-0 origin-top pointer-events-none"
         style={{
-          transform: `scaleY(${lid})`,
-          transition: "transform 0.12s cubic-bezier(.4,0,.2,1)",
-          background: lid < 1 ? "rgba(255,255,255,1)" : "transparent",
+          transform: `scaleY(${lidValue})`,
+          background: lidValue < 0.99 ? "white" : "transparent",
         }}
       />
-
-      {/* Pupil + gloss */}
+      {/* pupil */}
       <div
         ref={pupilRef}
         className="absolute rounded-full will-change-transform flex items-center justify-center"
