@@ -1,8 +1,5 @@
-// App.jsx — KIDOOSE Conversion Edition
+// App.jsx — KIDOOSE Conversion Edition (WhatsApp iPhone Clone Demo)
 // Tech: React 18, TailwindCSS, framer-motion, clsx
-// Features: Intent-matched hero, WhatsApp-like samples, Trust strip, FAQ, Reviews, Pricing,
-//           Full OTP signup flow w/ phone masking by IP + resend link (30s), Scroll-aware header,
-//           Sticky mobile CTA, Clean/no-gimmick visuals.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,7 +23,6 @@ const COUNTRY_FORMATS = {
   IE: { dial: "+353", mask: "-- --- ----",   max: 9 },
   SG: { dial: "+65",  mask: "---- ----",     max: 8 },
   IN: { dial: "+91",  mask: "----- -----",   max: 10 },
-  // MENA focus
   TR: { dial: "+90",  mask: "--- --- ----",  max: 10 },
   AE: { dial: "+971", mask: "-- --- ----",   max: 9 },
   SA: { dial: "+966", mask: "-- --- ----",   max: 9 },
@@ -196,48 +192,133 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
   </header>
 );
 
-/* ---------------- WhatsApp Demo (beige bubbles) ---------------- */
+/* ---------------- iPhone Frame + WhatsApp Clone ---------------- */
+const iPhoneFrame = ({ children }) => (
+  <div className="relative mx-auto w-[360px] sm:w-[380px]">
+    {/* Bezel */}
+    <div className="relative rounded-[46px] border-[10px] border-black/90 bg-black/90 shadow-2xl overflow-hidden">
+      {/* Notch */}
+      <div className="absolute left-1/2 -translate-x-1/2 top-0 h-7 w-40 bg-black/90 rounded-b-2xl z-20" />
+      {/* Screen */}
+      <div className="relative h-[700px] bg-[#E5DDD5] overflow-hidden">
+        {/* Subtle WhatsApp wallpaper dots */}
+        <div
+          className="absolute inset-0 opacity-[0.35]"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px)",
+            backgroundPosition: "0 0, 12px 12px",
+            backgroundSize: "24px 24px, 24px 24px",
+          }}
+        />
+        <div className="relative z-10 h-full">{children}</div>
+      </div>
+    </div>
+  </div>
+);
+
 const WhatsAppDemo = () => {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const timers = [
-      setTimeout(() => setStep(1), 700),
-      setTimeout(() => setStep(2), 2100),
-      setTimeout(() => setStep(3), 4200),
+      setTimeout(() => setStep(1), 600),
+      setTimeout(() => setStep(2), 1700),
+      setTimeout(() => setStep(3), 3200),
+      setTimeout(() => setStep(4), 4700),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  const meta = (t) => (
+    <span className="ml-2 text-[10px] text-black/50 align-bottom">{t}</span>
+  );
+
+  const Bubble = ({ side = "in", children, time = "09:00", last = false }) => {
+    const isOut = side === "out";
+    const bg = isOut ? "#DCF8C6" : "#FFFFFF";
+    const align = isOut ? "items-end" : "items-start";
+    const radius = isOut
+      ? "rounded-[18px] rounded-tr-[6px]"   // outgoing tail side right-ish
+      : "rounded-[18px] rounded-tl-[6px]";  // incoming tail side left-ish
+
+    return (
+      <div className={clsx("w-full flex", align)}>
+        <div
+          className={clsx(
+            "max-w-[78%] px-3 py-2 shadow-sm border border-black/5",
+            radius
+          )}
+          style={{ background: bg }}
+        >
+          <div className="text-[14px] leading-snug text-black/90">{children}</div>
+          <div className="text-right">{meta(time)}</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="relative w-full max-w-[360px] mx-auto rounded-2xl overflow-hidden shadow-2xl border border-black/40 bg-[#ECE5DD]">
-      <div className="bg-[#E5DDD5] text-[#111] px-4 py-2 flex items-center gap-2">
-        <div className="w-2 h-2 bg-black/40 rounded-full" />
-        <span className="font-semibold">Kidoose</span>
+    <iPhoneFrame>
+      {/* Header */}
+      <div className="sticky top-0 z-20">
+        <div className="h-12 bg-[#F7F7F7] border-b border-black/10 flex items-center gap-2 px-3">
+          <div className="text-black/70 text-lg">‹</div>
+          <div className="w-7 h-7 rounded-full bg-[#D9D9D9] border border-black/10" />
+          <div className="flex-1 leading-tight">
+            <div className="text-[14px] font-semibold text-black/85">Kidoose</div>
+            <div className="text-[11px] text-green-700/90">online</div>
+          </div>
+          <div className="text-black/60 text-[18px]">📞</div>
+          <div className="text-black/60 text-[18px] ml-2">🎥</div>
+        </div>
       </div>
-      <div className="p-3 min-h-[260px]">
+
+      {/* Messages area */}
+      <div className="px-2 py-2 space-y-2 overflow-y-auto h-[640px]">
+        {step >= 1 && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+            <Bubble side="in" time="08:59">
+              🌞 Morning Play: Build a paper airplane together — one-minute race!
+            </Bubble>
+          </motion.div>
+        )}
+
         {step >= 2 && (
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="max-w-[85%] bg-[#FFF] text-[#111] rounded-2xl shadow px-3 py-2 border border-black/10"
-          >
-            🌞 Morning Play: Build a paper airplane together — one-minute race!
-            <div className="text-[10px] text-black/50 text-right mt-1">09:00</div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.1 }}>
+            <Bubble side="out" time="09:00">
+              Love it! We’ll try before school.
+            </Bubble>
           </motion.div>
         )}
+
         {step >= 3 && (
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="max-w-[85%] bg-[#FFF] text-[#111] rounded-2xl shadow px-3 py-2 mt-3 border border-black/10"
-          >
-            🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers…” …
-            <div className="text-[10px] text-black/50 text-right mt-1">19:00</div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.15 }}>
+            <Bubble side="in" time="19:00">
+              🌙 Bedtime: “Under the sleepy moon, Milo counted the wind’s whispers…” …
+            </Bubble>
+          </motion.div>
+        )}
+
+        {step >= 4 && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.2 }}>
+            <Bubble side="out" time="19:02">
+              Perfect length for tonight 👍
+            </Bubble>
           </motion.div>
         )}
       </div>
-    </div>
+
+      {/* Composer */}
+      <div className="absolute bottom-0 left-0 right-0 bg-[#F7F7F7] border-t border-black/10 px-2 py-2">
+        <div className="flex items-center gap-2">
+          <div className="text-black/50 text-xl">＋</div>
+          <div className="flex-1 bg-white border border-black/10 rounded-full px-4 py-2 text-[14px] text-black/50">
+            Message
+          </div>
+          <div className="text-black/50 text-xl">🎤</div>
+        </div>
+      </div>
+    </iPhoneFrame>
   );
 };
 
@@ -330,7 +411,7 @@ const How = () => (
         ].map((c) => (
           <div
             key={c.title}
-            className="rounded-2xl border border-white/12 bg:white/6 bg-white/5 backdrop-blur-lg p-6 text-left shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+            className="rounded-2xl border border-white/12 bg-white/5 backdrop-blur-lg p-6 text-left shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
           >
             <div className="text-2xl">{c.icon}</div>
             <h3 className="mt-2 text-xl font-semibold text-white">{c.title}</h3>
@@ -487,7 +568,7 @@ const Pricing = ({ onStart }) => {
   );
 };
 
-/* ---------------- FAQ (native <details>) ---------------- */
+/* ---------------- FAQ ---------------- */
 const QA = [
   ["What do I get daily?", "Two WhatsApp messages: a tiny morning play idea and a short calming bedtime story."],
   ["When do you send?", "Default 9am & 7pm local time (you can adjust after you start)."],
@@ -615,7 +696,6 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const formatLocal = (allDigits) => {
     let local = allDigits.startsWith(dialDigits) ? allDigits.slice(dialDigits.length) : allDigits;
     local = local.slice(0, fmt.max);
-    // build underscores equivalent to mask (keeping dashes)
     let out = fmt.mask.replace(/[0-9]/g, "_");
     for (const d of local) out = out.replace("_", d);
     return out.split("_")[0].trim();
@@ -826,7 +906,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
               )}
             </AnimatePresence>
 
-            {/* Details (unlocked after verified) */}
+            {/* Details */}
             <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
               <input
                 className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
@@ -843,19 +923,15 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                 aria-label="Child name"
               />
 
-              {/* Plan select */}
-              <div ref={popRef} className="relative">
+              <div className="relative" ref={popRef}>
                 <button
                   onClick={() => setPlanOpen((v) => !v)}
                   className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-left"
-                  aria-haspopup="listbox"
-                  aria-expanded={planOpen}
                 >
                   {plan
-                    ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.price}`
+                    ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find(x=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find(x=>x.id===plan)?.price}`
                     : "Select plan"}
                 </button>
-
                 <AnimatePresence>
                   {planOpen && (
                     <motion.div
@@ -863,18 +939,12 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 6 }}
                       className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
-                      role="listbox"
                     >
                       {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt) => (
                         <button
                           key={opt.id}
-                          onClick={() => {
-                            setPlan(opt.id);
-                            setPlanOpen(false);
-                          }}
+                          onClick={() => { setPlan(opt.id); setPlanOpen(false); }}
                           className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2"
-                          role="option"
-                          aria-selected={plan === opt.id}
                         >
                           <span>{opt.name}</span>
                           <span className="text-white/75">{opt.price}</span>
@@ -990,14 +1060,12 @@ export default function App() {
 
       <Footer />
 
-      {/* Sticky CTA on mobile */}
       <StickyMobileCTA
         intent={intent}
         onPrimary={() => setShowSignup(true)}
         onDemo={() => setShowDemo(true)}
       />
 
-      {/* Modals */}
       <SignUpModal
         open={showSignup}
         onClose={() => setShowSignup(false)}
