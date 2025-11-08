@@ -287,7 +287,7 @@ const WhatsAppDemo = () => {
   }, []);
 
   return (
-    <div className="relative w-[360px] sm:w-[390px] mx-auto rounded-2xl overflow-hidden shadow-2xl border border-black/40 bg-[#111B21]">
+    <div className="relative w-full max-w-[390px] mx-auto scale-95 sm:scale-100 rounded-2xl overflow-hidden shadow-2xl border border-black/40 bg-[#111B21]">
       {/* Top status bar */}
       <div className="bg-black flex justify-between items-center px-4 pt-2 pb-1">
         <Clock time={time} />
@@ -418,7 +418,7 @@ const Hero = ({ onPrimary, onDemo }) => (
 
       <p className="mt-4 text-white/75 italic">No charge until day 8 · Cancel anytime</p>
 
-      <div className="mt-8">
+      <div className="mt-8 flex justify-center pb-20 sm:pb-0">
         {/* NEW: WhatsApp replica embedded exactly as provided */}
         <WhatsAppDemo />
       </div>
@@ -613,10 +613,11 @@ const DemoModal = ({ open, onClose, onStart }) => (
         }}
       >
         <motion.div
-          className="relative w-full max-w-[90vw] sm:max-w-[420px] md:max-w-[520px] rounded-3xl border border-white/12 p-4 md:p-6 text-white"
-          style={{
-            background: "linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(32,44,51,0.98) 100%)",
-          }}
+  className="relative w-full max-w-[95vw] sm:max-w-[420px] md:max-w-[520px] rounded-3xl border border-white/12 p-4 md:p-6 text-white overflow-hidden"
+  style={{
+    background: "linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(32,44,51,0.98) 100%)",
+    paddingBottom: "4rem",
+  }}
           initial={{ scale: 0.98, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.98, opacity: 0 }}
