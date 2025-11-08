@@ -1,13 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 
 export default function Header() {
+  const GAP_PX = 6; // ← single source of truth for ALL horizontal spacing
+
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
-      <div className="flex items-center select-none gap-[8px]">
+      <div
+        className="flex items-center select-none"
+        style={{ columnGap: `${GAP_PX}px` }}
+      >
         <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">
           KID
         </span>
-        <CuteEyes />
+        <CuteEyes gap={GAP_PX} />
         <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">
           SE
         </span>
@@ -17,11 +22,12 @@ export default function Header() {
 }
 
 /* -------------------- Eyes -------------------- */
-function CuteEyes() {
-  const EYE = 38; // match letter height
-  const PUPIL = 14;
-  const GAP = 8; // equal spacing
-  const LIMIT = 6;
+function CuteEyes({ gap }) {
+  const EYE = 30;                       // a bit smaller than letters
+  const PUPIL = Math.round(EYE * 0.38); // proportionate pupil
+  const GAP = gap;                      // same gap as letters
+  const LIMIT = Math.round(EYE * 0.2);  // max pupil travel
+
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const wrapRef = useRef(null);
   const leftRef = useRef(null);
@@ -37,13 +43,17 @@ function CuteEyes() {
   // update pupils relative to wrapper center
   useEffect(() => {
     const update = () => {
-      if (!wrapRef.current) return;
-      const rect = wrapRef.current.getBoundingClientRect();
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+
+      const rect = wrap.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
+
       const dx = mouse.x - cx;
       const dy = mouse.y - cy;
       const len = Math.hypot(dx, dy) || 1;
+
       const nx = (dx / len) * LIMIT;
       const ny = (dy / len) * LIMIT;
 
@@ -54,7 +64,7 @@ function CuteEyes() {
       requestAnimationFrame(update);
     };
     update();
-  }, [mouse]);
+  }, [mouse, LIMIT]);
 
   return (
     <div
@@ -70,7 +80,6 @@ function CuteEyes() {
   );
 }
 
-/* -------------------- Eye -------------------- */
 function Eye({ size, pupil, refPupil }) {
   return (
     <div
@@ -80,6 +89,7 @@ function Eye({ size, pupil, refPupil }) {
         height: size,
         boxShadow: "inset 0 -2px 0 rgba(0,0,0,0.05)",
       }}
+      aria-label="KIDOOSE eye"
     >
       <div className="absolute inset-0 origin-top animate-kid-blink bg-white/0 pointer-events-none" />
       <div
@@ -106,7 +116,6 @@ function Eye({ size, pupil, refPupil }) {
   );
 }
 
-/* -------------------- Blink Animation -------------------- */
 const blinkCSS = `
 @keyframes kid-blink-frames {
   0%, 92%, 100% { transform: scaleY(1); background: rgba(255,255,255,0); }
