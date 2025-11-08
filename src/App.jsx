@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 export default function Header() {
-  const GAP_PX = 6; // adjust this to control spacing between everything
+  const GAP_PX = 6; // Equal spacing between all elements
 
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
@@ -23,8 +23,8 @@ export default function Header() {
 
 /* -------------------- Eyes -------------------- */
 function CuteEyes({ gap }) {
-  const EYE = 27;                       // smaller than letters for optical match
-  const PUPIL = Math.round(EYE * 0.38); // proportional pupil size
+  const EYE = 27;                       // slightly smaller than letters for optical match
+  const PUPIL = Math.round(EYE * 0.38); // proportional pupil
   const GAP = gap - 2;                  // slightly tighter between eyes
   const LIMIT = Math.round(EYE * 0.2);  // max pupil travel
 
@@ -33,14 +33,14 @@ function CuteEyes({ gap }) {
   const leftRef = useRef(null);
   const rightRef = useRef(null);
 
-  // track mouse globally
+  // Track mouse globally
   useEffect(() => {
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", handle);
     return () => window.removeEventListener("mousemove", handle);
   }, []);
 
-  // update pupils relative to wrapper center
+  // Move pupils
   useEffect(() => {
     const update = () => {
       const wrap = wrapRef.current;
@@ -49,7 +49,6 @@ function CuteEyes({ gap }) {
       const rect = wrap.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-
       const dx = mouse.x - cx;
       const dy = mouse.y - cy;
       const len = Math.hypot(dx, dy) || 1;
@@ -80,39 +79,49 @@ function CuteEyes({ gap }) {
   );
 }
 
-/* -------------------- Eye -------------------- */
+/* -------------------- Single Eye -------------------- */
 function Eye({ size, pupil, refPupil }) {
   return (
     <div
-      className="relative rounded-full overflow-hidden bg-white flex items-center justify-center"
+      className="relative rounded-full overflow-hidden flex items-center justify-center"
       style={{
         width: size,
         height: size,
-        boxShadow: "inset 0 -2px 0 rgba(0,0,0,0.05)",
+        background:
+          "radial-gradient(circle at 50% 55%, #FFFFFF 0%, #F2F2F2 85%, #E8E8E8 100%)",
+        boxShadow:
+          "inset 0 -2px 1px rgba(0,0,0,0.08), 0 2px 3px rgba(0,0,0,0.15)",
       }}
       aria-label="KIDOOSE eye"
     >
+      {/* eyelid (blinking) */}
       <div className="absolute inset-0 origin-top animate-kid-blink bg-white/0 pointer-events-none" />
+
+      {/* pupil (moves) */}
       <div
         ref={refPupil}
-        className="absolute rounded-full will-change-transform"
+        className="absolute rounded-full will-change-transform flex items-center justify-center"
         style={{
           width: pupil,
           height: pupil,
           background:
-            "radial-gradient(circle at 35% 35%, #111 0%, #222 60%, #000 100%)",
+            "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
         }}
-      />
-      <div
-        className="absolute rounded-full bg-white"
-        style={{
-          width: 4,
-          height: 4,
-          left: "60%",
-          top: "35%",
-          filter: "blur(0.5px)",
-        }}
-      />
+      >
+        {/* glossy highlight — moves *with* pupil */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: pupil * 0.5,
+            height: pupil * 0.5,
+            right: pupil * -0.05,
+            top: pupil * -0.05,
+            background:
+              "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0) 100%)",
+            filter: "blur(0.5px)",
+          }}
+        />
+      </div>
     </div>
   );
 }
