@@ -1,5 +1,6 @@
-// App.jsx — KIDOOSE Cinematic Build (Full A→Z Signup Flow, Demo Modal, OTP + Resend Timer, Pricing UX)
+// App.jsx — KIDOOSE USA Edition (Full cinematic build + LocalGreeting + Sample Mode)
 // Requirements: React 18, Tailwind, framer-motion, clsx
+// This file is self-contained. Paste as-is.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +26,6 @@ const COUNTRY_FORMATS = {
   IE: { dial: "+353", mask: "__ ___ ____", max: 9 },
   SG: { dial: "+65", mask: "____ ____", max: 8 },
   IN: { dial: "+91", mask: "_____ _____", max: 10 },
-  // MENA focus
   TR: { dial: "+90", mask: "___ ___ ____", max: 10 },
   AE: { dial: "+971", mask: "__ ___ ____", max: 9 },
   SA: { dial: "+966", mask: "__ ___ ____", max: 9 },
@@ -46,7 +46,7 @@ const isoToFlagEmoji = (iso2) =>
     ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt()))
     : "🌍";
 
-/* ---------------- Hook: Detect Country Dial Code ---------------- */
+/* ---------------- Hook: Detect Country Dial Code (locked to USA for launch) ---------------- */
 const useCountryDialCode = () => {
   const [dialCode, setDialCode] = useState("+1");
   const [countryCode, setCountryCode] = useState("US");
@@ -56,13 +56,12 @@ const useCountryDialCode = () => {
     let active = true;
     fetch("https://ipapi.co/json/")
       .then((r) => r.json())
-      .then((data) => {
+      .then(() => {
         if (!active) return;
-        const iso = (data?.country_code || "US").toUpperCase();
-        const fmt = COUNTRY_FORMATS[iso] || COUNTRY_FORMATS.DEFAULT;
-        setCountryCode(iso);
-        setDialCode(fmt.dial);
-        setFlag(isoToFlagEmoji(iso.slice(0, 2)));
+        // For early launch, force USA defaults even if IP is not US.
+        setCountryCode("US");
+        setDialCode("+1");
+        setFlag("🇺🇸");
       })
       .catch(() => {
         setCountryCode("US");
@@ -87,12 +86,8 @@ const Backdrop = () => {
     const tick = () => {
       t += 0.003;
       el.style.background = `
-        radial-gradient(1200px 800px at ${15 + 5 * Math.sin(t)}% ${
-        -10 + 6 * Math.cos(t * 0.8)
-      }%, rgba(245,193,110,0.20), transparent 55%),
-        radial-gradient(1100px 900px at ${85 + 4 * Math.cos(t * 0.7)}% ${
-        110 + 5 * Math.sin(t)
-      }%, rgba(139,167,255,0.22), transparent 58%),
+        radial-gradient(1200px 800px at ${15 + 5 * Math.sin(t)}% ${-10 + 6 * Math.cos(t * 0.8)}%, rgba(245,193,110,0.20), transparent 55%),
+        radial-gradient(1100px 900px at ${85 + 4 * Math.cos(t * 0.7)}% ${110 + 5 * Math.sin(t)}%, rgba(139,167,255,0.22), transparent 58%),
         linear-gradient(180deg, ${PAL.nightTop}, ${PAL.nightMid} 50%, ${PAL.nightBot})
       `;
       el.style.filter = `brightness(${1 + 0.02 * Math.sin(t)})`;
@@ -104,9 +99,47 @@ const Backdrop = () => {
   return <div ref={ref} className="fixed inset-0 -z-50 overflow-hidden" aria-hidden />;
 };
 
+/* ---------------- Localized Greeting (U.S. Parents Focus) ---------------- */
+const LocalGreeting = () => {
+  const [timeString, setTimeString] = useState("");
+  const [greeting, setGreeting] = useState("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      const options = { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/New_York" };
+      const formatted = new Intl.DateTimeFormat("en-US", options).format(new Date());
+      setTimeString(formatted);
+
+      const hourStr = new Intl.DateTimeFormat("en-US", {
+        hour: "numeric",
+        hour12: false,
+        timeZone: "America/New_York",
+      }).format(new Date());
+      const hour = parseInt(hourStr, 10);
+      if (hour < 12) setGreeting("Good morning");
+      else if (hour < 18) setGreeting("Good afternoon");
+      else setGreeting("Good evening");
+    };
+    updateTime();
+    const id = setInterval(updateTime, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="text-center text-white/80 text-sm md:text-base pt-4"
+    >
+      {greeting}! It’s {timeString} in New York — tonight’s story is ready for you 🇺🇸
+    </motion.div>
+  );
+};
+
 /* ---------------- Logo ---------------- */
-const KidooseLogo = ({ centerOnMobile = false }) => (
-  <div className={clsx("flex items-center gap-2 select-none", centerOnMobile && "justify-center w-full")}>
+const KidooseLogo = () => (
+  <div className="flex items-center gap-2 select-none">
     <span className="text-white font-extrabold text-xl md:text-2xl tracking-wide">KID</span>
     <motion.span
       className="w-4 h-4 md:w-5 md:h-5 rounded-full"
@@ -131,7 +164,7 @@ const KidooseLogo = ({ centerOnMobile = false }) => (
 );
 
 /* ---------------- Header (scroll-aware) ---------------- */
-const Header = ({ onPrimary, onDemo, showButtons }) => (
+const Header = ({ onPrimary, onSample, showButtons }) => (
   <header className="sticky top-0 z-40 bg-black/30 backdrop-blur-xl border-b border-white/10">
     <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-center md:justify-between">
       <KidooseLogo />
@@ -145,10 +178,10 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
             className="hidden md:flex items-center gap-3"
           >
             <button
-              onClick={onDemo}
+              onClick={onSample}
               className="rounded-2xl border border-white/25 bg-white/5 text-white px-4 py-2 font-semibold hover:bg-white/10"
             >
-              Play sample
+              Send sample
             </button>
             <button
               onClick={onPrimary}
@@ -164,7 +197,7 @@ const Header = ({ onPrimary, onDemo, showButtons }) => (
 );
 
 /* ========================================================================== */
-/* =================== WhatsApp Replica (exactly as uploaded) =============== */
+/* =================== WhatsApp Replica (exactly like your base) ============ */
 /* ========================================================================== */
 
 /* ---------- Status Bar ---------- */
@@ -270,12 +303,12 @@ const useIosClock = () => {
   return time;
 };
 
-/* ---------- WhatsAppDemo (exact replica, runs once) ---------- */
+/* ---------- WhatsAppDemo (scripted: typing → msg1 → typing → msg2) ---------- */
 const WhatsAppDemo = () => {
   const time = useIosClock();
   const [battery] = useState(0.82);
-
   const [stage, setStage] = useState(0); // 0 typing, 1 msg1, 2 typing again, 3 msg2
+
   useEffect(() => {
     const seq = [
       setTimeout(() => setStage(0), 500),
@@ -385,16 +418,16 @@ const WhatsAppDemo = () => {
 /* ========================================================================== */
 
 /* ---------------- Hero ---------------- */
-const Hero = ({ onPrimary, onDemo }) => (
+const Hero = ({ onPrimary, onSample }) => (
   <section className="text-white text-center pt-16 md:pt-20 pb-10 px-6">
     <div className="max-w-4xl mx-auto">
-      <p className="text-white/70 text-sm md:text-base">From two parents who wanted calmer days.</p>
+      <p className="text-white/70 text-sm md:text-base">From two parents who wanted calmer, happier days.</p>
       <h1 className="mt-2 text-4xl md:text-6xl font-extrabold leading-tight">
         Turn{" "}
         <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8BA7FF] to-[#F5C16E]">
           7 minutes a day
         </span>{" "}
-        into rituals your child will remember.
+        into rituals your child will cherish.
       </h1>
       <p className="mt-5 text-white/85 text-lg leading-relaxed">
         Every morning: a playful idea. Every night: a calming story.{" "}
@@ -409,17 +442,26 @@ const Hero = ({ onPrimary, onDemo }) => (
           Start your free week
         </button>
         <button
-          onClick={onDemo}
+          onClick={onSample}
           className="rounded-2xl border border-white/25 bg-white/5 text-white px-6 py-3 font-semibold hover:bg-white/10 w-full sm:w-auto"
         >
-          Play sample
+          Send me today’s sample
         </button>
       </div>
 
-      <p className="mt-4 text-white/75 italic">No charge until day 8 · Cancel anytime</p>
+      <p className="mt-4 text-white/75 italic">No charge until your free week ends · Cancel anytime</p>
+
+      {/* Trust strip + badges */}
+      <div className="mt-4 flex flex-col items-center gap-1 text-white/70 text-sm">
+        <div>Trusted by 1,200+ parents · 97% stay after the free week</div>
+        <div className="flex items-center gap-3 opacity-90">
+          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">WhatsApp-first</span>
+          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Cancel anytime</span>
+          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Under 7 minutes/day</span>
+        </div>
+      </div>
 
       <div className="mt-8 flex justify-center pb-20 sm:pb-0">
-        {/* NEW: WhatsApp replica embedded exactly as provided */}
         <WhatsAppDemo />
       </div>
     </div>
@@ -521,9 +563,7 @@ const Pricing = ({ onStart }) => {
     <section id="pricing" className="py-20 md:py-24 text-center text-white">
       <div className="mx-auto max-w-6xl px-6">
         <h2 className="text-3xl md:text-4xl font-extrabold">Simple pricing</h2>
-        <p className="mt-2 text-white/80">
-          Choose calm mornings, connected evenings — and let us handle the rest.
-        </p>
+        <p className="mt-2 text-white/80">Choose calm mornings, connected evenings — and let us handle the rest.</p>
 
         <div className="mt-10 grid md:grid-cols-3 gap-7">
           {plans.map((p) => (
@@ -549,12 +589,8 @@ const Pricing = ({ onStart }) => {
               {/* Centered name/tag/price */}
               <div className="sm:text-center">
                 <h3 className={clsx("text-2xl font-semibold", p.popular && "text-[#12151B]")}>{p.name}</h3>
-                <p className={clsx("text-sm mt-1 italic", p.popular ? "text-[#12151B]/80" : "text-white/70")}>
-                  {p.tag}
-                </p>
-                <div className={clsx("text-4xl font-extrabold mt-3", p.popular && "text-[#12151B]")}>
-                  {p.price}
-                </div>
+                <p className={clsx("text-sm mt-1 italic", p.popular ? "text-[#12151B]/80" : "text-white/70")}>{p.tag}</p>
+                <div className={clsx("text-4xl font-extrabold mt-3", p.popular && "text-[#12151B]")}>{p.price}</div>
               </div>
 
               {/* Left-aligned bullet list, centered block */}
@@ -591,69 +627,44 @@ const Pricing = ({ onStart }) => {
           ))}
         </div>
 
-        <p className="mt-10 text-white/70 italic">
-          Because sometimes, all it takes is 7 minutes to feel connected again.
-        </p>
+        <p className="mt-10 text-white/70 italic">Because sometimes, all it takes is 7 minutes to feel connected again.</p>
       </div>
     </section>
   );
 };
 
-/* ---------------- Demo Modal ---------------- */
-const DemoModal = ({ open, onClose, onStart }) => (
-  <AnimatePresence>
-    {open && (
-      <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
-      >
-        <motion.div
-  className="relative w-full max-w-[95vw] sm:max-w-[420px] md:max-w-[520px] rounded-3xl border border-white/12 p-4 md:p-6 text-white overflow-hidden"
-  style={{
-    background: "linear-gradient(180deg, rgba(17,27,33,0.98) 0%, rgba(32,44,51,0.98) 100%)",
-    paddingBottom: "4rem",
-  }}
-          initial={{ scale: 0.98, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.98, opacity: 0 }}
-        >
-          <button
-            onClick={onClose}
-            className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/40 border border-white/20 grid place-items-center hover:bg-black/55"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-
-          <div className="mx-auto grid place-items-center">
-            {/* NEW: WhatsApp replica inside modal */}
-            <WhatsAppDemo />
-          </div>
-
-          <div className="mt-4 md:mt-6 flex justify-center">
-            <button
-              onClick={onStart}
-              className="rounded-2xl bg-white text-[#12151B] px-6 py-3 font-semibold shadow hover:shadow-md"
-            >
-              Start my free trial
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
+/* ---------------- Footer ---------------- */
+const Footer = () => (
+  <footer className="py-10 border-t border-white/10 text-center text-white/80 text-sm bg-black/20">
+    <div className="max-w-6xl mx-auto px-6">
+      <p>© {new Date().getFullYear()} KIDOOSE · All rights reserved</p>
+      <p className="mt-2">📧 hello@kidoose.com · 📞 +1 (555) 123-4567</p>
+      <p className="mt-4 italic">Your child will remember stories, not screens. Start your free week — and make tonight magical ✨</p>
+    </div>
+  </footer>
 );
 
-/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer) ---------------- */
-const SignUpModal = ({ open, onClose, defaultPlan }) => {
+/* ---------------- Sticky Mobile CTA ---------------- */
+const StickyMobileCTA = ({ onPrimary, onSample }) => (
+  <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
+    <div className="mx-auto max-w-6xl">
+      <div className="m-3 rounded-2xl border border-white/15 bg-black/60 backdrop-blur-lg p-2 flex items-center gap-2">
+        <button onClick={onSample} className="flex-1 rounded-xl border border-white/25 bg-white/5 text-white px-3 py-2 font-semibold">
+          Sample
+        </button>
+        <button onClick={onPrimary} className="flex-1 rounded-xl bg-white text-gray-900 px-3 py-2 font-semibold">
+          Free week
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+/* ---------------- Sign Up Modal (masked phone, OTP flow, 30s resend timer, sample/trial modes) ---------------- */
+const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTrial }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
 
-  const fmtBase = COUNTRY_FORMATS[countryCode] || COUNTRY_FORMATS.DEFAULT;
+  const fmtBase = COUNTRY_FORMATS[countryCode] || COUNTRY_FORMATS.US;
   const fmt = { dial: fmtBase.dial || dialCode || "+1", mask: fmtBase.mask, max: fmtBase.max };
   const dialDigits = fmt.dial.replace(/\D/g, "");
 
@@ -666,7 +677,6 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
-  const [step, setStep] = useState(1);
   const [resendTimer, setResendTimer] = useState(0);
   const popRef = useRef(null);
 
@@ -682,7 +692,6 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
       setOtpSent(false);
       setOtp("");
       setVerified(false);
-      setStep(1);
       setResendTimer(0);
     }
   }, [open, defaultPlan]);
@@ -728,12 +737,12 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
     if (!isComplete || sending || verified || otpSent) return;
     setSending(true);
     setOtp("");
+    // Simulated network → replace with real API
     setTimeout(() => {
       setSending(false);
       setOtpSent(true);
-      setStep(2);
       setResendTimer(30); // start countdown
-    }, 1200);
+    }, 1000);
   };
 
   const onEnter = (e) => {
@@ -747,10 +756,11 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   useEffect(() => {
     if (otpSent && !verified && otp.trim().length === 6) {
       setVerified(true);
-      setStep(3);
     }
   }, [otp, otpSent, verified]);
 
+  // SAMPLE MODE: after verification, show success card & upsell (skip plan)
+  // TRIAL MODE: after verification, unlock details & plan select (normal)
   const planList = [
     { id: "starter", name: "Starter", price: "$4.99/mo" },
     { id: "family", name: "Family", price: "$7.99/mo" },
@@ -770,7 +780,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
           }}
         >
           <motion.div
-            className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6"
+            className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6 overflow-hidden"
             style={{
               background: "linear-gradient(180deg, rgba(17,27,33,0.96) 0%, rgba(32,44,51,0.96) 100%)",
             }}
@@ -787,10 +797,14 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
             </button>
 
             <h3 className="text-2xl md:text-3xl font-extrabold">
-              Start your free week <span className="inline-block ml-1">✨</span>
+              {mode === "sample" ? "Get today’s WhatsApp sample ✨" : "Start your free week ✨"}
             </h3>
             <p className="text-white/85 mt-1">
-              No charge until day 8 · Cancel anytime · Messages via WhatsApp {flag}
+              {mode === "sample" ? (
+                <>We’ll send a one-time sample message to WhatsApp {flag}.</>
+              ) : (
+                <>No charge until your free week ends · Cancel anytime · Messages via WhatsApp {flag}</>
+              )}
             </p>
 
             {/* Step indicator */}
@@ -800,6 +814,8 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                   <div
                     className={clsx(
                       "w-6 h-6 grid place-items-center rounded-full border",
+                      // For sample mode, steps are Verify (1→2) then Success (3)
+                      // For trial mode, steps are Verify (1→2) then Details (3)
                       (n <= (verified ? 3 : otpSent ? 2 : 1)) ? "bg-white text-[#12151B] border-white" : "border-white/30"
                     )}
                   >
@@ -809,7 +825,7 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                 </div>
               ))}
               <div className="ml-2 text-white/70">
-                {verified ? "Details" : otpSent ? "Enter OTP" : "Verify phone"}
+                {verified ? (mode === "sample" ? "Success" : "Details") : otpSent ? "Enter OTP" : "Verify phone"}
               </div>
             </div>
 
@@ -879,15 +895,8 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
             {/* OTP block */}
             <AnimatePresence>
               {otpSent && !verified && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  className="mt-3"
-                >
-                  <p className="text-white/80 text-sm">
-                    Check WhatsApp — we just sent your 6-digit code.
-                  </p>
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="mt-3">
+                  <p className="text-white/80 text-sm">Check WhatsApp — we just sent your 6-digit code.</p>
                   <div className="mt-2 flex flex-col gap-2">
                     <input
                       className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 tracking-widest text-center"
@@ -906,7 +915,6 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
                         // Resend only via this link (not the main button)
                         setOtp("");
                         setOtpSent(false);
-                        // restart send
                         setTimeout(() => {
                           setSending(true);
                           setTimeout(() => {
@@ -928,80 +936,100 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
               )}
             </AnimatePresence>
 
-            {/* Details (unlocked after verified) */}
-            <div
-              className={clsx(
-                "mt-4 space-y-3 transition duration-500",
-                !verified && "blur-sm pointer-events-none opacity-60"
-              )}
-            >
-              <input
-                className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
-                placeholder="Parent name"
-                value={parent}
-                onChange={(e) => setParent(e.target.value)}
-                aria-label="Parent name"
-              />
-              <input
-                className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
-                placeholder="Child name (optional)"
-                value={child}
-                onChange={(e) => setChild(e.target.value)}
-                aria-label="Child name"
-              />
-
-              {/* Plan select */}
-              <div ref={popRef} className="relative">
+            {/* Post-verify content */}
+            {/* SAMPLE MODE → Success block (skip plan) */}
+            {mode === "sample" && verified && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 rounded-xl border border-white/20 bg-white/10 p-4 relative overflow-hidden"
+              >
+                {/* subtle confetti-ish sparkles */}
+                <motion.div
+                  className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-30"
+                  style={{ background: "radial-gradient(closest-side, #F5C16E, transparent)" }}
+                  animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.35, 0.25] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <div className="text-white/90 font-semibold">All set!</div>
+                <div className="text-white/75 text-sm mt-1">We’ve sent today’s sample to your WhatsApp {flag}.</div>
                 <button
-                  onClick={() => setPlanOpen((v) => !v)}
-                  className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-left"
-                  aria-haspopup="listbox"
-                  aria-expanded={planOpen}
+                  className="mt-3 w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold"
+                  onClick={() => {
+                    // Close and reopen in trial mode (App controls this)
+                    if (onSwitchToTrial) onSwitchToTrial();
+                  }}
                 >
-                  {plan
-                    ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.price}`
-                    : "Select plan"}
+                  Loved it? Start your free week
                 </button>
+              </motion.div>
+            )}
 
-                <AnimatePresence>
-                  {planOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 6 }}
-                      className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
-                      role="listbox"
-                    >
-                      {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt) => (
-                        <button
-                          key={opt.id}
-                          onClick={() => {
-                            setPlan(opt.id);
-                            setPlanOpen(false);
-                          }}
-                          className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2"
-                          role="option"
-                          aria-selected={plan === opt.id}
-                        >
-                          <span>{opt.name}</span>
-                          <span className="text-white/75">{opt.price}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* TRIAL MODE → Details + Plan (unlocked after verified) */}
+            {mode === "trial" && (
+              <div className={clsx("mt-4 space-y-3 transition duration-500", !verified && "blur-sm pointer-events-none opacity-60")}>
+                <input
+                  className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="Parent name"
+                  value={parent}
+                  onChange={(e) => setParent(e.target.value)}
+                  aria-label="Parent name"
+                />
+                <input
+                  className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="Child name (optional)"
+                  value={child}
+                  onChange={(e) => setChild(e.target.value)}
+                  aria-label="Child name"
+                />
+
+                {/* Plan select */}
+                <div ref={popRef} className="relative">
+                  <button
+                    onClick={() => setPlanOpen((v) => !v)}
+                    className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-left"
+                    aria-haspopup="listbox"
+                    aria-expanded={planOpen}
+                  >
+                    {plan ? `${planList.find((x) => x.id === plan)?.name} · ${planList.find((x) => x.id === plan)?.price}` : "Select plan"}
+                  </button>
+
+                  <AnimatePresence>
+                    {planOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+                        role="listbox"
+                      >
+                        {planList.map((opt) => (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setPlan(opt.id);
+                              setPlanOpen(false);
+                            }}
+                            className="w-full flex items-center justify-between gap-3 text-white/95 hover:bg-white/10 rounded-lg px-3 py-2"
+                            role="option"
+                            aria-selected={plan === opt.id}
+                          >
+                            <span>{opt.name}</span>
+                            <span className="text-white/75">{opt.price}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button className="flex-1 rounded-2xl bg-white text-gray-900 py-3 font-semibold">Get my free week</button>
+                </div>
+
+                <p className="text-white/60 text-xs">By continuing, you agree to receive messages on WhatsApp. You can stop anytime.</p>
               </div>
-
-              <div className="pt-2 flex gap-3">
-                <button className="flex-1 rounded-2xl bg-white text-gray-900 py-3 font-semibold">
-                  Get my free week
-                </button>
-              </div>
-
-              <p className="text-white/60 text-xs">
-                By continuing, you agree to receive messages on WhatsApp. You can stop anytime.
-              </p>
-            </div>
+            )}
           </motion.div>
         </motion.div>
       )}
@@ -1009,52 +1037,16 @@ const SignUpModal = ({ open, onClose, defaultPlan }) => {
   );
 };
 
-/* ---------------- Footer ---------------- */
-const Footer = () => (
-  <footer className="py-10 border-t border-white/10 text-center text-white/80 text-sm bg-black/20">
-    <div className="max-w-6xl mx-auto px-6">
-      <p>© {new Date().getFullYear()} KIDOOSE · All rights reserved</p>
-      <p className="mt-2">📧 hello@kidoose.com · 📞 +1 (555) 123-4567</p>
-      <p className="mt-4 italic">
-        Your child will remember stories, not screens. Start your free week — and make tonight magical ✨
-      </p>
-    </div>
-  </footer>
-);
-
-/* ---------------- Sticky Mobile CTA ---------------- */
-const StickyMobileCTA = ({ onPrimary, onDemo }) => (
-  <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-    <div className="mx-auto max-w-6xl">
-      <div className="m-3 rounded-2xl border border-white/15 bg-black/60 backdrop-blur-lg p-2 flex items-center gap-2">
-        <button
-          onClick={onDemo}
-          className="flex-1 rounded-xl border border-white/25 bg-white/5 text-white px-3 py-2 font-semibold"
-        >
-          Sample
-        </button>
-        <button
-          onClick={onPrimary}
-          className="flex-1 rounded-xl bg-white text-gray-900 px-3 py-2 font-semibold"
-        >
-          Free week
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
 /* ---------------- App Root ---------------- */
 export default function App() {
   const [showSignup, setShowSignup] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
   const [chosenPlan, setChosenPlan] = useState(null);
+  const [signupMode, setSignupMode] = useState("trial"); // "trial" | "sample"
   const [showHeaderButtons, setShowHeaderButtons] = useState(false);
 
   useEffect(() => {
     document.body.style.background = "transparent";
-    document.body.style.fontFamily =
-      "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+    document.body.style.fontFamily = "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
 
     const onScroll = () => {
       setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
@@ -1067,24 +1059,37 @@ export default function App() {
     <div className="text-white min-h-screen">
       <Backdrop />
       <Header
-        onPrimary={() => setShowSignup(true)}
-        onDemo={() => setShowDemo(true)}
+        onPrimary={() => {
+          setSignupMode("trial");
+          setShowSignup(true);
+        }}
+        onSample={() => {
+          setSignupMode("sample");
+          setShowSignup(true);
+        }}
         showButtons={showHeaderButtons}
       />
 
       <main>
+        <LocalGreeting />
         <Hero
           onPrimary={() => {
             setChosenPlan(null);
+            setSignupMode("trial");
             setShowSignup(true);
           }}
-          onDemo={() => setShowDemo(true)}
+          onSample={() => {
+            setChosenPlan(null);
+            setSignupMode("sample");
+            setShowSignup(true);
+          }}
         />
         <How />
         <Reviews />
         <Pricing
           onStart={(p) => {
             setChosenPlan(p);
+            setSignupMode("trial");
             setShowSignup(true);
           }}
         />
@@ -1094,23 +1099,29 @@ export default function App() {
 
       {/* Sticky CTA on mobile */}
       <StickyMobileCTA
-        onPrimary={() => setShowSignup(true)}
-        onDemo={() => setShowDemo(true)}
+        onPrimary={() => {
+          setSignupMode("trial");
+          setShowSignup(true);
+        }}
+        onSample={() => {
+          setSignupMode("sample");
+          setShowSignup(true);
+        }}
       />
 
-      {/* Modals */}
+      {/* SignUp Modal — supports both modes */}
       <SignUpModal
         open={showSignup}
         onClose={() => setShowSignup(false)}
         defaultPlan={chosenPlan}
-      />
-      <DemoModal
-        open={showDemo}
-        onClose={() => setShowDemo(false)}
-        onStart={() => {
-          setChosenPlan(null);
-          setShowDemo(false);
-          setShowSignup(true);
+        mode={signupMode}
+        onSwitchToTrial={() => {
+          // called after sample success → reopen in trial mode
+          setShowSignup(false);
+          setTimeout(() => {
+            setSignupMode("trial");
+            setShowSignup(true);
+          }, 80);
         }}
       />
     </div>
