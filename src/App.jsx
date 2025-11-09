@@ -1,4 +1,4 @@
-// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Persistent Phone Memory)
+// App.jsx — KIDOOSE USA Edition (Cinematic build + CuteEyes Logo + LocalGreeting + Sample Mode + Scroll-to-Top Orb + Persistent Phone Memory)
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -31,16 +31,39 @@ const getVerifiedPhone = () => {
 /* ---------------- Country & Dial Helpers ---------------- */
 const COUNTRY_FORMATS = {
   US: { dial: "+1", mask: "___ ___ ____", max: 10 },
+  CA: { dial: "+1", mask: "___ ___ ____", max: 10 },
+  GB: { dial: "+44", mask: "____ ______", max: 10 },
+  AU: { dial: "+61", mask: "___ ___ ___", max: 9 },
+  NZ: { dial: "+64", mask: "___ ___ ____", max: 9 },
+  IE: { dial: "+353", mask: "__ ___ ____", max: 9 },
+  SG: { dial: "+65", mask: "____ ____", max: 8 },
+  IN: { dial: "+91", mask: "_____ _____", max: 10 },
+  TR: { dial: "+90", mask: "___ ___ ____", max: 10 },
+  AE: { dial: "+971", mask: "__ ___ ____", max: 9 },
+  SA: { dial: "+966", mask: "__ ___ ____", max: 9 },
+  EG: { dial: "+20", mask: "___ ___ ____", max: 9 },
+  KW: { dial: "+965", mask: "___ ____", max: 8 },
+  QA: { dial: "+974", mask: "____ ____", max: 8 },
+  BH: { dial: "+973", mask: "____ ____", max: 8 },
+  OM: { dial: "+968", mask: "____ ____", max: 8 },
+  JO: { dial: "+962", mask: "__ ______", max: 9 },
+  LB: { dial: "+961", mask: "__ ___ ___", max: 8 },
+  MA: { dial: "+212", mask: "__ ___ ____", max: 9 },
+  DZ: { dial: "+213", mask: "__ ___ ____", max: 9 },
   DEFAULT: { dial: "+1", mask: "____________", max: 12 },
 };
-const isoToFlagEmoji = (iso2) =>
-  iso2 ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt())) : "🌍";
 
-/* ---------------- Hook: Detect Country Dial Code ---------------- */
+const isoToFlagEmoji = (iso2) =>
+  iso2
+    ? iso2.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt()))
+    : "🌍";
+
+/* ---------------- Hook: Detect Country Dial Code (locked to USA for launch) ---------------- */
 const useCountryDialCode = () => {
   const [dialCode, setDialCode] = useState("+1");
   const [countryCode, setCountryCode] = useState("US");
   const [flag, setFlag] = useState("🇺🇸");
+
   useEffect(() => {
     let active = true;
     fetch("https://ipapi.co/json/")
@@ -56,8 +79,11 @@ const useCountryDialCode = () => {
         setDialCode("+1");
         setFlag("🇺🇸");
       });
-    return () => (active = false);
+    return () => {
+      active = false;
+    };
   }, []);
+
   return { dialCode, countryCode, flag };
 };
 
@@ -88,11 +114,13 @@ const Backdrop = () => {
 const LocalGreeting = () => {
   const [timeString, setTimeString] = useState("");
   const [greeting, setGreeting] = useState("");
+
   useEffect(() => {
     const updateTime = () => {
       const options = { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/New_York" };
       const formatted = new Intl.DateTimeFormat("en-US", options).format(new Date());
       setTimeString(formatted);
+
       const hourStr = new Intl.DateTimeFormat("en-US", {
         hour: "numeric",
         hour12: false,
@@ -107,6 +135,7 @@ const LocalGreeting = () => {
     const id = setInterval(updateTime, 60000);
     return () => clearInterval(id);
   }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -119,41 +148,8 @@ const LocalGreeting = () => {
   );
 };
 
-/* ---------------- Header + Eyes Logo ---------------- */
-const Header = ({ onPrimary, onSample, showButtons }) => (
-  <header className="sticky top-0 z-40 bg-black/30 backdrop-blur-xl border-b border-white/10">
-    <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-center md:justify-between">
-      <KidooseEyesLogo />
-      <AnimatePresence>
-        {showButtons && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.3 }}
-            className="hidden md:flex items-center gap-3"
-          >
-            <button
-              onClick={onSample}
-              className="rounded-2xl border border-white/25 bg-white/5 text-white px-4 py-2 font-semibold hover:bg-white/10"
-            >
-              Send sample
-            </button>
-            <button
-              onClick={onPrimary}
-              className="rounded-2xl bg-white text-gray-900 px-5 py-2 font-semibold shadow hover:shadow-md"
-            >
-              Start Free Week
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  </header>
-);
-
-/* ---- Animated Eyes Logo ---- */
-function KidooseEyesLogo() {
+/* ---------------- CuteEyes Logo ---------------- */
+function KidooseLogo() {
   return (
     <div className="flex items-center select-none gap-1">
       <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">KID</span>
@@ -162,42 +158,49 @@ function KidooseEyesLogo() {
     </div>
   );
 }
+
 function CuteEyes() {
   const EYE = 26;
   const PUPIL = EYE * 0.63;
   const GAP = 5;
   const LIMIT = 5;
+
   const [blink, setBlink] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
   const leftWrap = useRef(null);
   const rightWrap = useRef(null);
   const leftPupil = useRef(null);
   const rightPupil = useRef(null);
 
   useEffect(() => setIsMobile(window.matchMedia("(pointer: coarse)").matches), []);
+
   useEffect(() => {
     if (isMobile) return;
-    const move = (e) => setMouse({ x: e.clientX, y: e.clientY });
-    window.addEventListener("mousemove", move);
-    return () => window.removeEventListener("mousemove", move);
+    const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
+    window.addEventListener("mousemove", handle);
+    return () => window.removeEventListener("mousemove", handle);
   }, [isMobile]);
+
   useEffect(() => {
     const loop = () => {
       const delay = 5000 + Math.random() * 4000;
       setTimeout(() => {
         setBlink(true);
         setTimeout(() => setBlink(false), 280);
-        if (Math.random() < 0.15)
+        if (Math.random() < 0.15) {
           setTimeout(() => {
             setBlink(true);
             setTimeout(() => setBlink(false), 280);
           }, 600);
+        }
         loop();
       }, delay);
     };
     loop();
   }, []);
+
   useEffect(() => {
     if (!isMobile) return;
     const positions = [
@@ -206,36 +209,44 @@ function CuteEyes() {
       { x: -LIMIT * 0.8, y: LIMIT * 0.6 },
     ];
     const moveRandom = () => {
-      const n = positions[Math.floor(Math.random() * positions.length)];
+      const next = positions[Math.floor(Math.random() * positions.length)];
       [leftPupil.current, rightPupil.current].forEach((p) => {
         if (p) {
           p.style.transition = "transform 0.35s ease-in-out";
-          p.style.transform = `translate(${n.x}px, ${n.y}px)`;
+          p.style.transform = `translate(${next.x}px, ${next.y}px)`;
         }
       });
     };
     const loop = setInterval(moveRandom, 3000 + Math.random() * 1000);
     moveRandom();
-    return () => clearInterval(loop);
+    window.addEventListener("touchstart", moveRandom);
+    window.addEventListener("scroll", moveRandom);
+    return () => {
+      clearInterval(loop);
+      window.removeEventListener("touchstart", moveRandom);
+      window.removeEventListener("scroll", moveRandom);
+    };
   }, [isMobile]);
+
   useEffect(() => {
     if (isMobile) return;
-    const move = (wrap, pupil) => {
+    const moveOne = (wrap, pupil) => {
       if (!wrap || !pupil) return;
-      const r = wrap.getBoundingClientRect();
-      const cx = r.left + r.width / 2,
-        cy = r.top + r.height / 2;
-      const dx = mouse.x - cx,
-        dy = mouse.y - cy;
+      const rect = wrap.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = mouse.x - cx;
+      const dy = mouse.y - cy;
       const len = Math.hypot(dx, dy) || 1;
-      const nx = (dx / len) * LIMIT,
-        ny = (dy / len) * LIMIT;
+      const nx = (dx / len) * LIMIT;
+      const ny = (dy / len) * LIMIT;
       pupil.style.transition = "transform 0.09s linear";
       pupil.style.transform = `translate(${nx}px, ${ny}px)`;
     };
-    move(leftWrap.current, leftPupil.current);
-    move(rightWrap.current, rightPupil.current);
+    moveOne(leftWrap.current, leftPupil.current);
+    moveOne(rightWrap.current, rightPupil.current);
   }, [mouse, isMobile]);
+
   return (
     <div className="flex items-center justify-center" style={{ height: EYE, transform: "translateY(-1px)" }}>
       <Eye size={EYE} pupil={PUPIL} wrapRef={leftWrap} pupilRef={leftPupil} blink={blink} />
@@ -244,6 +255,7 @@ function CuteEyes() {
     </div>
   );
 }
+
 function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
   return (
     <div
@@ -289,6 +301,39 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
     </div>
   );
 }
+
+/* ---------------- Header (scroll-aware) ---------------- */
+const Header = ({ onPrimary, onSample, showButtons }) => (
+  <header className="sticky top-0 z-40 bg-black/30 backdrop-blur-xl border-b border-white/10">
+    <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-center md:justify-between">
+      <KidooseLogo />
+      <AnimatePresence>
+        {showButtons && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+            className="hidden md:flex items-center gap-3"
+          >
+            <button
+              onClick={onSample}
+              className="rounded-2xl border border-white/25 bg-white/5 text-white px-4 py-2 font-semibold hover:bg-white/10"
+            >
+              Send sample
+            </button>
+            <button
+              onClick={onPrimary}
+              className="rounded-2xl bg-white text-gray-900 px-5 py-2 font-semibold shadow hover:shadow-md"
+            >
+              Start Free Week
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  </header>
+);
 /* ---------------- Hero ---------------- */
 const Hero = ({ onPrimary, onSample }) => (
   <section id="hero-section" className="text-white text-center pt-16 md:pt-20 pb-24 md:pb-20 px-6">
@@ -323,13 +368,18 @@ const Hero = ({ onPrimary, onSample }) => (
 
       <p className="mt-4 text-white/75 italic">No charge until your free week ends · Cancel anytime</p>
 
+      {/* Trust strip + badges */}
       <div className="mt-5 flex flex-col items-center gap-1 text-white/70 text-sm">
-        <div>Trusted by 1 200+ parents · 97% stay after the free week</div>
+        <div>Trusted by 1,200+ parents · 97% stay after the free week</div>
         <div className="flex items-center gap-3 opacity-90">
           <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">WhatsApp-first</span>
           <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Cancel anytime</span>
           <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Under 7 minutes/day</span>
         </div>
+      </div>
+
+      <div className="mt-10 flex justify-center pb-6 sm:pb-0">
+        <WhatsAppDemo />
       </div>
     </div>
   </section>
@@ -427,40 +477,72 @@ const Pricing = ({ onStart }) => {
   );
 
   return (
-    <section id="pricing" className="py-16 md:py-20">
-      <div className="mx-auto max-w-6xl px-6 text-center text-white">
-        <h2 className="text-3xl md:text-4xl font-extrabold">Choose your plan</h2>
-        <p className="mt-3 text-white/80">All plans start with a free week · Cancel anytime</p>
-        <div className="mt-10 grid md:grid-cols-3 gap-6">
-          {plans.map((p, i) => (
+    <section id="pricing" className="py-20 md:py-24 text-center text-white">
+      <div className="mx-auto max-w-6xl px-6">
+        <h2 className="text-3xl md:text-4xl font-extrabold">Simple pricing</h2>
+        <p className="mt-2 text-white/80">Choose calm mornings, connected evenings — and let us handle the rest.</p>
+
+        <div className="mt-10 grid md:grid-cols-3 gap-7">
+          {plans.map((p) => (
             <motion.div
               key={p.id}
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
               className={clsx(
-                "rounded-2xl border border-white/12 bg-white/6 backdrop-blur-lg p-6 text-left shadow-[0_10px_30px_rgba(0,0,0,0.25)] hover:scale-[1.03] transition-transform",
-                p.popular && "bg-gradient-to-tr from-[#8BA7FF]/30 to-[#F5C16E]/30"
+                "relative rounded-3xl border p-6 text-left sm:text-center shadow-[0_15px_40px_rgba(0,0,0,0.35)] transition duration-300 hover:shadow-[0_20px_60px_rgba(0,0,0,0.45)]",
+                p.popular
+                  ? "border-white/15 bg-gradient-to-br from-[#F5C16E]/90 via-[#D5C0F7]/70 to-[#8BA7FF]/90"
+                  : "border-white/12 bg-white/6 backdrop-blur-lg"
               )}
+              onClick={() => onStart(p)}
+              role="button"
             >
-              <h3 className="text-xl font-semibold text-white">{p.name}</h3>
-              <p className="text-white/70 text-sm">{p.tag}</p>
-              <p className="mt-3 text-3xl font-bold text-white">{p.price}</p>
-              <ul className="mt-4 space-y-2 text-white/80">
+              {p.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 text-white text-xs font-semibold px-3 py-1 border border-white/20">
+                  ❤️ Most loved by parents
+                </div>
+              )}
+
+              <div className="sm:text-center">
+                <h3 className={clsx("text-2xl font-semibold", p.popular && "text-[#12151B]")}>{p.name}</h3>
+                <p className={clsx("text-sm mt-1 italic", p.popular ? "text-[#12151B]/80" : "text-white/70")}>{p.tag}</p>
+                <div className={clsx("text-4xl font-extrabold mt-3", p.popular && "text-[#12151B]")}>{p.price}</div>
+              </div>
+
+              <ul className={clsx("mt-4 space-y-2 text-left mx-auto max-w-[22rem]", p.popular ? "text-[#12151B]" : "text-white/90")}>
                 {p.features.map((f) => (
-                  <li key={f}>• {f}</li>
+                  <li key={f} className="flex gap-2 items-start justify-start">
+                    <span>✓</span>
+                    <span>{f}</span>
+                  </li>
                 ))}
               </ul>
+
+              <p className={clsx("mt-4 text-sm text-center", p.popular ? "text-[#12151B]/85" : "text-white/70")}>
+                Less than a cup of coffee — for calmer mornings and sweeter nights.
+              </p>
+
               <button
-                onClick={() => onStart(p)}
-                className="mt-6 w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold shadow hover:shadow-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStart(p);
+                }}
+                className={clsx(
+                  "w-full mt-6 rounded-2xl py-3 font-semibold transition text-center",
+                  p.popular ? "bg-[#12151B] text-white hover:bg-black" : "bg-white text-gray-900 hover:shadow-md"
+                )}
               >
                 {p.cta}
               </button>
+
+              <p className={clsx("mt-3 text-xs text-center", p.popular ? "text-[#12151B]/75" : "text-white/70")}>
+                🛡️ Cancel anytime · 💌 No app needed · ❤️ 97% stay after free week
+              </p>
             </motion.div>
           ))}
         </div>
+
+        <p className="mt-10 text-white/70 italic">Because sometimes, all it takes is 7 minutes to feel connected again.</p>
       </div>
     </section>
   );
@@ -472,277 +554,37 @@ const Footer = () => (
     <div className="max-w-6xl mx-auto px-6">
       <p>© {new Date().getFullYear()} KIDOOSE · All rights reserved</p>
       <p className="mt-2">📧 hello@kidoose.com · 📞 +1 (555) 123-4567</p>
-      <p className="mt-4 italic">
-        Your child will remember stories, not screens. Start your free week — and make tonight magical ✨
-      </p>
+      <p className="mt-4 italic">Your child will remember stories, not screens. Start your free week — and make tonight magical ✨</p>
     </div>
   </footer>
 );
-/* ---------------- Sign Up Modal (masked phone + OTP + persistent memory) ---------------- */
-const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTrial }) => {
-  const { dialCode, countryCode, flag } = useCountryDialCode();
-  const fmtBase = COUNTRY_FORMATS[countryCode] || COUNTRY_FORMATS.US;
-  const fmt = { dial: fmtBase.dial || dialCode || "+1", mask: fmtBase.mask, max: fmtBase.max };
-  const dialDigits = fmt.dial.replace(/\D/g, "");
 
-  const [phone, setPhone] = useState("");
-  const [parent, setParent] = useState("");
-  const [child, setChild] = useState("");
-  const [planOpen, setPlanOpen] = useState(false);
-  const [plan, setPlan] = useState(defaultPlan?.id ?? "");
-  const [sending, setSending] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [verified, setVerified] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
-  const [persisted, setPersisted] = useState(null);
-  const popRef = useRef(null);
-
-  useEffect(() => {
-    const stored = getVerifiedPhone();
-    if (mode === "trial" && stored?.phone) {
-      setPhone(stored.phone);
-      setVerified(true);
-      setPersisted(stored);
-    }
-  }, [mode]);
-
-  useEffect(() => {
-    if (!open) {
-      setPhone("");
-      setParent("");
-      setChild("");
-      setPlanOpen(false);
-      setPlan(defaultPlan?.id ?? "");
-      setSending(false);
-      setOtpSent(false);
-      setOtp("");
-      setVerified(false);
-      setResendTimer(0);
-      setPersisted(null);
-    }
-  }, [open, defaultPlan]);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (popRef.current && !popRef.current.contains(e.target)) setPlanOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  useEffect(() => {
-    if (!otpSent || resendTimer <= 0) return;
-    const id = setInterval(() => setResendTimer((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(id);
-  }, [otpSent, resendTimer]);
-
-  const formatLocal = (digits) => {
-    let local = digits.startsWith(dialDigits) ? digits.slice(dialDigits.length) : digits;
-    local = local.slice(0, fmt.max);
-    let out = fmt.mask;
-    for (const d of local) out = out.replace("_", d);
-    return out.split("_")[0].trim();
-  };
-
-  const handlePhoneChange = (e) => {
-    const digits = e.target.value.replace(/\D/g, "");
-    const local = formatLocal(digits);
-    setPhone(`${fmt.dial} ${local}`);
-  };
-
-  const currentLocalDigits = (() => {
-    const digits = phone.replace(/\D/g, "");
-    return digits.startsWith(dialDigits) ? digits.slice(dialDigits.length) : digits;
-  })();
-  const isComplete = currentLocalDigits.length === fmt.max;
-
-  const sendOtp = () => {
-    if (!isComplete || sending || verified || otpSent) return;
-    setSending(true);
-    setTimeout(() => {
-      setSending(false);
-      setOtpSent(true);
-      setResendTimer(30);
-    }, 1000);
-  };
-
-  useEffect(() => {
-    if (otpSent && !verified && otp.trim().length === 6) {
-      setVerified(true);
-      saveVerifiedPhone(phone, flag);
-    }
-  }, [otp, otpSent, verified, phone, flag]);
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) onClose();
-          }}
-        >
-          <motion.div
-            className="relative w-[95%] max-w-xl rounded-2xl border border-white/20 text-white p-6 overflow-hidden"
-            style={{
-              background: "linear-gradient(180deg, rgba(17,27,33,0.96) 0%, rgba(32,44,51,0.96) 100%)",
-            }}
-            initial={{ scale: 0.98, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.98, opacity: 0 }}
-          >
-            <button
-              onClick={onClose}
-              className="absolute right-3 top-3 w-9 h-9 rounded-full bg-black/40 border border-white/20 grid place-items-center hover:bg-black/55"
-            >
-              ✕
-            </button>
-
-            <h3 className="text-2xl md:text-3xl font-extrabold">
-              {mode === "sample" ? "Get today’s WhatsApp sample ✨" : "Start your free week ✨"}
-            </h3>
-            <p className="text-white/85 mt-1">
-              {mode === "sample"
-                ? <>We’ll send a one-time sample message to WhatsApp {flag}.</>
-                : <>No charge until your free week ends · Cancel anytime · Messages via WhatsApp {flag}</>}
-            </p>
-
-            {/* Phone input */}
-            <div className="relative mt-5 w-full">
-              <input
-                type="tel"
-                className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 pr-[7.6rem]"
-                placeholder={`${fmt.dial} ${fmt.mask}`}
-                inputMode="tel"
-                value={phone}
-                onChange={handlePhoneChange}
-                disabled={verified || !!persisted}
-              />
-              <button
-                className={clsx(
-                  "absolute top-1/2 -translate-y-1/2 right-1.5 rounded-lg text-sm font-semibold transition px-3 py-1.5 min-w-[110px]",
-                  verified || persisted
-                    ? "bg-white text-[#12151B]"
-                    : sending
-                    ? "bg-[#12151B] text-white opacity-80"
-                    : otpSent
-                    ? "bg-white/15 text-white/60 cursor-not-allowed"
-                    : isComplete
-                    ? "bg-[#12151B] hover:bg-black text-white"
-                    : "bg-white/15 text-white/60 cursor-not-allowed"
-                )}
-                disabled={verified || persisted || sending || otpSent || !isComplete}
-                onClick={sendOtp}
-              >
-                {verified || persisted ? "Verified" : sending ? "Sending..." : otpSent ? "OTP Sent" : "Verify"}
-              </button>
-            </div>
-
-            {/* OTP input */}
-            <AnimatePresence>
-              {otpSent && !verified && (
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-3">
-                  <p className="text-white/80 text-sm">Check WhatsApp — we just sent your 6-digit code.</p>
-                  <input
-                    className="w-full mt-2 rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-center tracking-widest"
-                    placeholder="●●●●●●"
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  />
-                  <button
-                    disabled={resendTimer > 0}
-                    onClick={sendOtp}
-                    className={clsx(
-                      "mt-2 text-xs underline underline-offset-4",
-                      resendTimer > 0 ? "text-white/40 cursor-not-allowed" : "text-white/80 hover:text-white"
-                    )}
-                  >
-                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend code"}
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Trial or Sample sections */}
-            {mode === "sample" && verified && (
-              <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-4 text-center">
-                <p className="font-semibold text-white/90">All set! We’ve sent today’s sample to your WhatsApp {flag}.</p>
-                <button
-                  className="mt-3 w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold"
-                  onClick={() => {
-                    saveVerifiedPhone(phone, flag);
-                    if (onSwitchToTrial) onSwitchToTrial();
-                  }}
-                >
-                  Loved it? Start your free week
-                </button>
-              </div>
-            )}
-
-            {mode === "trial" && (
-              <div className={clsx("mt-4 space-y-3", !verified && "blur-sm pointer-events-none opacity-60")}>
-                <input
-                  className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95"
-                  placeholder="Parent name"
-                  value={parent}
-                  onChange={(e) => setParent(e.target.value)}
-                />
-                <input
-                  className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95"
-                  placeholder="Child name (optional)"
-                  value={child}
-                  onChange={(e) => setChild(e.target.value)}
-                />
-
-                {/* Plan dropdown */}
-                <div ref={popRef} className="relative">
-                  <button
-                    onClick={() => setPlanOpen((v) => !v)}
-                    className="w-full rounded-xl bg-white/10 border border-white/25 px-4 py-3 text-white/95 text-left"
-                  >
-                    {plan
-                      ? `${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.name} · ${[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].find((x)=>x.id===plan)?.price}`
-                      : "Select plan"}
-                  </button>
-
-                  <AnimatePresence>
-                    {planOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 6 }}
-                        className="absolute z-10 mt-2 w-full rounded-xl border border-white/20 bg-[rgba(20,25,35,0.92)] backdrop-blur-xl p-2"
-                      >
-                        {[{id:"starter",name:"Starter",price:"$4.99/mo"},{id:"family",name:"Family",price:"$7.99/mo"},{id:"premium",name:"Premium",price:"$11.99/mo"}].map((opt)=>(
-                          <button
-                            key={opt.id}
-                            onClick={() => { setPlan(opt.id); setPlanOpen(false); }}
-                            className="w-full flex items-center justify-between text-white/95 hover:bg-white/10 rounded-lg px-3 py-2"
-                          >
-                            <span>{opt.name}</span><span className="text-white/75">{opt.price}</span>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <button className="w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold">Get my free week</button>
-                <p className="text-white/60 text-xs">By continuing, you agree to receive messages on WhatsApp. You can stop anytime.</p>
-              </div>
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+/* ---------------- Scroll-to-Top Gradient Orb ---------------- */
+const ScrollToTopOrb = ({ show }) => (
+  <AnimatePresence>
+    {show && (
+      <motion.button
+        key="orb"
+        initial={{ opacity: 0, y: 24, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.9 }}
+        transition={{ duration: 0.3 }}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Go to top"
+        className="md:hidden fixed bottom-5 right-5 z-50 rounded-full w-14 h-14 shadow-[0_8px_28px_rgba(0,0,0,0.45)] ring-1 ring-white/20 backdrop-blur-xl"
+        style={{
+          background: "conic-gradient(from 160deg at 50% 50%, #EAF0FF, #83A3FF 35%, #5E7AFF 70%, #355BFF 100%)",
+        }}
+      >
+        <motion.span className="inline-block" initial={false} whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.06 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" className="mx-auto">
+            <path d="M12 5l-7 7h14l-7-7z" fill="white" />
+          </svg>
+        </motion.span>
+      </motion.button>
+    )}
+  </AnimatePresence>
+);
 
 /* ---------------- App Root ---------------- */
 export default function App() {
@@ -750,10 +592,17 @@ export default function App() {
   const [chosenPlan, setChosenPlan] = useState(null);
   const [signupMode, setSignupMode] = useState("trial");
   const [showHeaderButtons, setShowHeaderButtons] = useState(false);
+  const [showTopOrb, setShowTopOrb] = useState(false);
 
   useEffect(() => {
+    document.body.style.background = "transparent";
+    document.body.style.fontFamily = "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+
     const onScroll = () => {
       setShowHeaderButtons(window.scrollY > window.innerHeight * 0.75);
+      const hero = document.getElementById("hero-section");
+      const heroH = hero?.offsetHeight || 600;
+      setShowTopOrb(window.scrollY > heroH * 0.8);
     };
     onScroll();
     window.addEventListener("scroll", onScroll);
@@ -774,7 +623,6 @@ export default function App() {
         }}
         showButtons={showHeaderButtons}
       />
-
       <main>
         <LocalGreeting />
         <Hero
@@ -799,22 +647,8 @@ export default function App() {
           }}
         />
       </main>
-
       <Footer />
-
-      <SignUpModal
-        open={showSignup}
-        onClose={() => setShowSignup(false)}
-        defaultPlan={chosenPlan}
-        mode={signupMode}
-        onSwitchToTrial={() => {
-          setShowSignup(false);
-          setTimeout(() => {
-            setSignupMode("trial");
-            setShowSignup(true);
-          }, 100);
-        }}
-      />
+      <ScrollToTopOrb show={showTopOrb} />
     </div>
   );
 }
