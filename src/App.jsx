@@ -1,4 +1,4 @@
-// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Scroll-to-Top Orb + Persistent Phone Memory)
+// App.jsx — KIDOOSE USA Edition (Cinematic build + LocalGreeting + Sample Mode + Persistent Phone Memory)
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -31,7 +31,6 @@ const getVerifiedPhone = () => {
 /* ---------------- Country & Dial Helpers ---------------- */
 const COUNTRY_FORMATS = {
   US: { dial: "+1", mask: "___ ___ ____", max: 10 },
-  // ... [rest unchanged]
   DEFAULT: { dial: "+1", mask: "____________", max: 12 },
 };
 const isoToFlagEmoji = (iso2) =>
@@ -57,9 +56,7 @@ const useCountryDialCode = () => {
         setDialCode("+1");
         setFlag("🇺🇸");
       });
-    return () => {
-      active = false;
-    };
+    return () => (active = false);
   }, []);
   return { dialCode, countryCode, flag };
 };
@@ -122,9 +119,7 @@ const LocalGreeting = () => {
   );
 };
 
-/* ========================================================================== */
-/* ======================  NEW  KIDOOSE  HEADER  ============================ */
-/* ========================================================================== */
+/* ---------------- Header + Eyes Logo ---------------- */
 const Header = ({ onPrimary, onSample, showButtons }) => (
   <header className="sticky top-0 z-40 bg-black/30 backdrop-blur-xl border-b border-white/10">
     <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-center md:justify-between">
@@ -258,8 +253,7 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         width: size,
         height: size,
         background: "radial-gradient(circle at 50% 55%, #fffdf8 0%, #f3f1ea 90%)",
-        boxShadow:
-          "inset 0 -1px 1px rgba(0,0,0,0.08), 0 1px 2px rgba(255,180,130,0.12)",
+        boxShadow: "inset 0 -1px 1px rgba(0,0,0,0.08), 0 1px 2px rgba(255,180,130,0.12)",
       }}
     >
       <div
@@ -329,18 +323,13 @@ const Hero = ({ onPrimary, onSample }) => (
 
       <p className="mt-4 text-white/75 italic">No charge until your free week ends · Cancel anytime</p>
 
-      {/* Trust strip + badges */}
       <div className="mt-5 flex flex-col items-center gap-1 text-white/70 text-sm">
-        <div>Trusted by 1,200+ parents · 97% stay after the free week</div>
+        <div>Trusted by 1 200+ parents · 97% stay after the free week</div>
         <div className="flex items-center gap-3 opacity-90">
           <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">WhatsApp-first</span>
           <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Cancel anytime</span>
           <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15">Under 7 minutes/day</span>
         </div>
-      </div>
-
-      <div className="mt-10 flex justify-center pb-6 sm:pb-0">
-        <WhatsAppDemo />
       </div>
     </div>
   </section>
@@ -436,7 +425,48 @@ const Pricing = ({ onStart }) => {
     ],
     []
   );
-  /* ---------------- Footer ---------------- */
+
+  return (
+    <section id="pricing" className="py-16 md:py-20">
+      <div className="mx-auto max-w-6xl px-6 text-center text-white">
+        <h2 className="text-3xl md:text-4xl font-extrabold">Choose your plan</h2>
+        <p className="mt-3 text-white/80">All plans start with a free week · Cancel anytime</p>
+        <div className="mt-10 grid md:grid-cols-3 gap-6">
+          {plans.map((p, i) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className={clsx(
+                "rounded-2xl border border-white/12 bg-white/6 backdrop-blur-lg p-6 text-left shadow-[0_10px_30px_rgba(0,0,0,0.25)] hover:scale-[1.03] transition-transform",
+                p.popular && "bg-gradient-to-tr from-[#8BA7FF]/30 to-[#F5C16E]/30"
+              )}
+            >
+              <h3 className="text-xl font-semibold text-white">{p.name}</h3>
+              <p className="text-white/70 text-sm">{p.tag}</p>
+              <p className="mt-3 text-3xl font-bold text-white">{p.price}</p>
+              <ul className="mt-4 space-y-2 text-white/80">
+                {p.features.map((f) => (
+                  <li key={f}>• {f}</li>
+                ))}
+              </ul>
+              <button
+                onClick={() => onStart(p)}
+                className="mt-6 w-full rounded-2xl bg-white text-gray-900 py-3 font-semibold shadow hover:shadow-md"
+              >
+                {p.cta}
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/* ---------------- Footer ---------------- */
 const Footer = () => (
   <footer className="py-10 border-t border-white/10 text-center text-white/80 text-sm bg-black/20">
     <div className="max-w-6xl mx-auto px-6">
@@ -448,7 +478,6 @@ const Footer = () => (
     </div>
   </footer>
 );
-
 /* ---------------- Sign Up Modal (masked phone + OTP + persistent memory) ---------------- */
 const SignUpModal = ({ open, onClose, defaultPlan, mode = "trial", onSwitchToTrial }) => {
   const { dialCode, countryCode, flag } = useCountryDialCode();
