@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 export default function Header() {
   return (
     <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-4 flex justify-center">
-      <div className="flex items-center select-none gap-2">
+      <div className="flex items-center select-none gap-1">
         <span className="text-white font-extrabold text-3xl md:text-4xl tracking-wide">
           KID
         </span>
@@ -18,10 +18,10 @@ export default function Header() {
 
 /* -------------------- Animated Cute Eyes -------------------- */
 function CuteEyes() {
-  const EYE = 38;                // 👁 same as logo text height
-  const PUPIL = EYE * 0.6;       // proportionally large for cute style
-  const GAP = 5;                 // even spacing between eyes
-  const LIMIT = 6;               // pupil movement range
+  const EYE = 26;                // 👁 eye height same as before
+  const PUPIL = EYE * 0.63;      // cute big pupil ratio
+  const GAP = 5;                 // spacing between the two eyes
+  const LIMIT = 5;               // pupil travel distance
 
   const [blink, setBlink] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -32,12 +32,12 @@ function CuteEyes() {
   const leftPupil = useRef(null);
   const rightPupil = useRef(null);
 
-  /* Detect if device is mobile */
+  /* detect if device is mobile */
   useEffect(() => {
     setIsMobile(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
-  /* Fast mouse-follow on desktop */
+  /* track mouse on desktop */
   useEffect(() => {
     if (isMobile) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
@@ -45,49 +45,48 @@ function CuteEyes() {
     return () => window.removeEventListener("mousemove", handle);
   }, [isMobile]);
 
-  /* Random blinking for both eyes */
+  /* blinking loop */
   useEffect(() => {
-    const blinkLoop = () => {
-      const delay = 5000 + Math.random() * 3000; // every 5–8s
+    const loop = () => {
+      const delay = 5000 + Math.random() * 4000; // every 5–9s
       setTimeout(() => {
         setBlink(true);
         setTimeout(() => setBlink(false), 280);
-        if (Math.random() < 0.15) {               // occasional double blink
+        if (Math.random() < 0.15) { // occasional double blink
           setTimeout(() => {
             setBlink(true);
             setTimeout(() => setBlink(false), 280);
           }, 600);
         }
-        blinkLoop();
+        loop();
       }, delay);
     };
-    blinkLoop();
+    loop();
   }, []);
 
-  /* Mobile: independent random gaze + reactive on touch */
+  /* mobile: random gaze movement */
   useEffect(() => {
     if (!isMobile) return;
-
     const positions = [
-      { x: LIMIT * 0.9, y: LIMIT * 0.6 },  // bottom-right
+      { x: LIMIT * 0.8, y: LIMIT * 0.6 },  // bottom-right
       { x: 0, y: LIMIT * 0.6 },            // bottom-center
-      { x: -LIMIT * 0.9, y: LIMIT * 0.6 }, // bottom-left
+      { x: -LIMIT * 0.8, y: LIMIT * 0.6 }, // bottom-left
     ];
 
     const moveRandom = () => {
       const next = positions[Math.floor(Math.random() * positions.length)];
       [leftPupil.current, rightPupil.current].forEach((p) => {
         if (p) {
-          p.style.transition = "transform 0.4s ease-in-out";
+          p.style.transition = "transform 0.35s ease-in-out";
           p.style.transform = `translate(${next.x}px, ${next.y}px)`;
         }
       });
     };
 
-    const loop = setInterval(moveRandom, 2500 + Math.random() * 500);
+    const loop = setInterval(moveRandom, 3000 + Math.random() * 1000);
     moveRandom();
 
-    // 👆 React when user touches / scrolls
+    // touch / scroll also triggers gaze change
     const touch = (e) => {
       const x = e.touches ? e.touches[0].clientX : e.clientX;
       const y = e.touches ? e.touches[0].clientY : e.clientY;
@@ -117,7 +116,7 @@ function CuteEyes() {
     };
   }, [isMobile]);
 
-  /* Desktop: follow mouse */
+  /* desktop: independent tracking */
   useEffect(() => {
     if (isMobile) return;
 
@@ -131,8 +130,7 @@ function CuteEyes() {
       const len = Math.hypot(dx, dy) || 1;
       const nx = (dx / len) * LIMIT;
       const ny = (dy / len) * LIMIT;
-
-      pupil.style.transition = "transform 0.1s linear";
+      pupil.style.transition = "transform 0.09s linear";
       pupil.style.transform = `translate(${nx}px, ${ny}px)`;
     };
 
@@ -145,9 +143,9 @@ function CuteEyes() {
       className="flex items-center justify-center"
       style={{ height: EYE, transform: "translateY(1px)" }}
     >
-      <Eye size={EYE} pupil={PUPIL} pupilRef={leftPupil} wrapRef={leftWrap} blink={blink} />
+      <Eye size={EYE} pupil={PUPIL} wrapRef={leftWrap} pupilRef={leftPupil} blink={blink} />
       <div style={{ width: GAP }} />
-      <Eye size={EYE} pupil={PUPIL} pupilRef={rightPupil} wrapRef={rightWrap} blink={blink} />
+      <Eye size={EYE} pupil={PUPIL} wrapRef={rightWrap} pupilRef={rightPupil} blink={blink} />
     </div>
   );
 }
@@ -163,7 +161,7 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         height: size,
         background:
           "radial-gradient(circle at 50% 55%, #fffdf8 0%, #f3f1ea 90%)",
-        boxShadow: "inset 0 -2px 2px rgba(0,0,0,0.1), 0 2px 3px rgba(255,180,130,0.15)",
+        boxShadow: "inset 0 -1px 1px rgba(0,0,0,0.08), 0 1px 2px rgba(255,180,130,0.12)",
       }}
     >
       {/* pupil */}
@@ -177,14 +175,14 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
             "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
         }}
       >
-        {/* glossy sparkle that moves with pupil */}
+        {/* glossy sparkle */}
         <div
           className="absolute rounded-full"
           style={{
-            width: pupil * 0.55,
-            height: pupil * 0.55,
-            right: pupil * -0.05,
-            top: pupil * -0.05,
+            width: pupil * 0.5,
+            height: pupil * 0.5,
+            right: pupil * -0.1,
+            top: pupil * -0.1,
             background:
               "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0) 100%)",
             filter: "blur(0.5px)",
@@ -197,14 +195,14 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         className="absolute inset-0 rounded-full bg-gradient-to-b from-[#f0cbb5] to-[#d79e80]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(-100%)",
-          transition: "transform 0.1s ease-in 0.05s",
+          transition: "transform 0.1s ease-in",
         }}
       />
       <div
         className="absolute inset-0 rounded-full bg-gradient-to-t from-[#f0cbb5] to-[#d79e80]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(100%)",
-          transition: "transform 0.1s ease-in 0.05s",
+          transition: "transform 0.1s ease-in",
         }}
       />
     </div>
