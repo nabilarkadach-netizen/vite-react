@@ -18,9 +18,9 @@ export default function Header() {
 
 /* -------------------- Animated Cute Eyes -------------------- */
 function CuteEyes() {
-  const EYE = 26;                // 👁 eye height same as before
-  const PUPIL = EYE * 0.63;      // cute big pupil ratio
-  const GAP = 5;                 // spacing between the two eyes
+  const EYE = 26;                // 👁 eye size
+  const PUPIL = EYE * 0.63;      // larger baby-like pupil
+  const GAP = 5;                 // space between eyes
   const LIMIT = 5;               // pupil travel distance
 
   const [blink, setBlink] = useState(false);
@@ -37,7 +37,7 @@ function CuteEyes() {
     setIsMobile(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
-  /* track mouse on desktop */
+  /* track mouse (desktop only) */
   useEffect(() => {
     if (isMobile) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
@@ -45,14 +45,15 @@ function CuteEyes() {
     return () => window.removeEventListener("mousemove", handle);
   }, [isMobile]);
 
-  /* blinking loop */
+  /* blinking (random rhythm) */
   useEffect(() => {
     const loop = () => {
       const delay = 5000 + Math.random() * 4000; // every 5–9s
       setTimeout(() => {
         setBlink(true);
         setTimeout(() => setBlink(false), 280);
-        if (Math.random() < 0.15) { // occasional double blink
+        // occasional double blink
+        if (Math.random() < 0.15) {
           setTimeout(() => {
             setBlink(true);
             setTimeout(() => setBlink(false), 280);
@@ -64,9 +65,10 @@ function CuteEyes() {
     loop();
   }, []);
 
-  /* mobile: random gaze movement */
+  /* mobile: random gentle eye movement */
   useEffect(() => {
     if (!isMobile) return;
+
     const positions = [
       { x: LIMIT * 0.8, y: LIMIT * 0.6 },  // bottom-right
       { x: 0, y: LIMIT * 0.6 },            // bottom-center
@@ -86,7 +88,6 @@ function CuteEyes() {
     const loop = setInterval(moveRandom, 3000 + Math.random() * 1000);
     moveRandom();
 
-    // touch / scroll also triggers gaze change
     const touch = (e) => {
       const x = e.touches ? e.touches[0].clientX : e.clientX;
       const y = e.touches ? e.touches[0].clientY : e.clientY;
@@ -116,7 +117,7 @@ function CuteEyes() {
     };
   }, [isMobile]);
 
-  /* desktop: independent tracking */
+  /* desktop: independent smooth eye tracking */
   useEffect(() => {
     if (isMobile) return;
 
@@ -141,7 +142,7 @@ function CuteEyes() {
   return (
     <div
       className="flex items-center justify-center"
-      style={{ height: EYE, transform: "translateY(1px)" }}
+      style={{ height: EYE, transform: "translateY(-1px)" }} // fixed alignment
     >
       <Eye size={EYE} pupil={PUPIL} wrapRef={leftWrap} pupilRef={leftPupil} blink={blink} />
       <div style={{ width: GAP }} />
@@ -161,7 +162,8 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         height: size,
         background:
           "radial-gradient(circle at 50% 55%, #fffdf8 0%, #f3f1ea 90%)",
-        boxShadow: "inset 0 -1px 1px rgba(0,0,0,0.08), 0 1px 2px rgba(255,180,130,0.12)",
+        boxShadow:
+          "inset 0 -1px 1px rgba(0,0,0,0.08), 0 1px 2px rgba(255,180,130,0.12)",
       }}
     >
       {/* pupil */}
@@ -175,7 +177,7 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
             "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
         }}
       >
-        {/* glossy sparkle */}
+        {/* glossy highlight (moves with pupil) */}
         <div
           className="absolute rounded-full"
           style={{
@@ -190,19 +192,19 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         />
       </div>
 
-      {/* eyelids */}
+      {/* eyelids (blink animation) */}
       <div
         className="absolute inset-0 rounded-full bg-gradient-to-b from-[#f0cbb5] to-[#d79e80]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(-100%)",
-          transition: "transform 0.1s ease-in",
+          transition: "transform 0.12s ease-in",
         }}
       />
       <div
         className="absolute inset-0 rounded-full bg-gradient-to-t from-[#f0cbb5] to-[#d79e80]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(100%)",
-          transition: "transform 0.1s ease-in",
+          transition: "transform 0.12s ease-in",
         }}
       />
     </div>
