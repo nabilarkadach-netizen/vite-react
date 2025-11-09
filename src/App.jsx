@@ -13,28 +13,21 @@ export default function Header() {
 }
 
 function CuteEyes() {
-  const EYE = 26;
-  const PUPIL = 10;
-  const GAP = 6;
-  const LIMIT = 6;
-
+  const EYE = 26, PUPIL = 10, GAP = 6, LIMIT = 6;
   const [blink, setBlink] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
   const [idleTarget, setIdleTarget] = useState({ x: 0, y: 0 });
 
-  const leftWrap = useRef(null);
-  const rightWrap = useRef(null);
-  const leftPupil = useRef(null);
-  const rightPupil = useRef(null);
+  const leftWrap = useRef(null), rightWrap = useRef(null);
+  const leftPupil = useRef(null), rightPupil = useRef(null);
 
   /* Detect mobile */
   useEffect(() => {
-    const mq = window.matchMedia("(pointer: coarse)");
-    setIsMobile(mq.matches);
+    setIsMobile(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
-  /* Track mouse on desktop */
+  /* Desktop mouse tracking */
   useEffect(() => {
     if (isMobile) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
@@ -42,26 +35,26 @@ function CuteEyes() {
     return () => window.removeEventListener("mousemove", handle);
   }, [isMobile]);
 
-  /* --- MOBILE RANDOM GAZE LOOP --- */
+  /* ---- MOBILE RANDOM GAZE ---- */
   useEffect(() => {
     if (!isMobile) return;
 
     const positions = [
-      { x: LIMIT * 0.8, y: LIMIT * 0.6 },  // bottom-right
-      { x: -LIMIT * 0.8, y: LIMIT * 0.6 }, // bottom-left
-      { x: 0, y: LIMIT * 0.6 },            // bottom-center
+      { x: LIMIT * 0.8, y: LIMIT * 0.6 },  // down-right
+      { x: -LIMIT * 0.8, y: LIMIT * 0.6 }, // down-left
+      { x: 0, y: LIMIT * 0.6 },            // down-center
     ];
 
     const loop = () => {
       const next = positions[Math.floor(Math.random() * positions.length)];
       setIdleTarget(next);
-      const wait = 2000 + Math.random() * 2000; // 2–4 s idle before next move
+      const wait = 2000 + Math.random() * 1000; // 2–3 s idle
       setTimeout(loop, wait);
     };
     loop();
   }, [isMobile]);
 
-  /* --- BLINK LOOP --- */
+  /* ---- BLINK LOOP ---- */
   useEffect(() => {
     const loop = () => {
       const delay = 5000 + Math.random() * 3000; // 5–8 s
@@ -80,39 +73,31 @@ function CuteEyes() {
     loop();
   }, []);
 
-  /* --- MOVE PUPILS --- */
+  /* ---- MOVE PUPILS ---- */
   useEffect(() => {
-    let raf;
-    const move = () => {
-      const moveOne = (wrap, pupil) => {
-        if (!wrap || !pupil) return;
-        const rect = wrap.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
+    const moveOne = (wrap, pupil) => {
+      if (!wrap || !pupil) return;
+      const rect = wrap.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
 
-        let nx = 0, ny = 0;
-        if (isMobile) {
-          nx = idleTarget.x;
-          ny = idleTarget.y;
-        } else {
-          const dx = mouse.x - cx;
-          const dy = mouse.y - cy;
-          const len = Math.hypot(dx, dy) || 1;
-          nx = (dx / len) * LIMIT;
-          ny = (dy / len) * LIMIT;
-        }
+      let nx = 0, ny = 0;
+      if (isMobile) {
+        nx = idleTarget.x;
+        ny = idleTarget.y;
+      } else {
+        const dx = mouse.x - cx, dy = mouse.y - cy;
+        const len = Math.hypot(dx, dy) || 1;
+        nx = (dx / len) * LIMIT;
+        ny = (dy / len) * LIMIT;
+      }
 
-        // smooth but responsive transition
-        pupil.style.transition = "transform 0.6s ease-in-out";
-        pupil.style.transform = `translate(${nx}px, ${ny}px)`;
-      };
-
-      moveOne(leftWrap.current, leftPupil.current);
-      moveOne(rightWrap.current, rightPupil.current);
-      raf = requestAnimationFrame(move);
+      pupil.style.transition = "transform 0.45s ease-in-out";
+      pupil.style.transform = `translate(${nx}px, ${ny}px)`;
     };
-    move();
-    return () => cancelAnimationFrame(raf);
+
+    moveOne(leftWrap.current, leftPupil.current);
+    moveOne(rightWrap.current, rightPupil.current);
   }, [mouse, idleTarget, isMobile]);
 
   return (
