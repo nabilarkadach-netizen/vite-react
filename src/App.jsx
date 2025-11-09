@@ -13,7 +13,11 @@ export default function Header() {
 }
 
 function CuteEyes() {
-  const EYE = 26, PUPIL = 10, GAP = 6, LIMIT = 6;
+  const EYE = 26;
+  const PUPIL = 14; // 🍼 Bigger baby-style pupil
+  const GAP = 6;
+  const LIMIT = 6;
+
   const [blink, setBlink] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
@@ -24,10 +28,11 @@ function CuteEyes() {
 
   /* Detect mobile */
   useEffect(() => {
-    setIsMobile(window.matchMedia("(pointer: coarse)").matches);
+    const m = window.matchMedia("(pointer: coarse)");
+    setIsMobile(m.matches);
   }, []);
 
-  /* Desktop mouse tracking */
+  /* Desktop: follow mouse fast */
   useEffect(() => {
     if (isMobile) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
@@ -35,26 +40,26 @@ function CuteEyes() {
     return () => window.removeEventListener("mousemove", handle);
   }, [isMobile]);
 
-  /* ---- MOBILE RANDOM GAZE ---- */
+  /* Mobile: random gaze motion loop */
   useEffect(() => {
     if (!isMobile) return;
 
     const positions = [
-      { x: LIMIT * 0.8, y: LIMIT * 0.6 },  // down-right
-      { x: -LIMIT * 0.8, y: LIMIT * 0.6 }, // down-left
-      { x: 0, y: LIMIT * 0.6 },            // down-center
+      { x: LIMIT * 0.9, y: LIMIT * 0.6 },  // bottom-right
+      { x: 0, y: LIMIT * 0.6 },            // bottom-center
+      { x: -LIMIT * 0.9, y: LIMIT * 0.6 }, // bottom-left
     ];
 
     const loop = () => {
       const next = positions[Math.floor(Math.random() * positions.length)];
       setIdleTarget(next);
-      const wait = 2000 + Math.random() * 1000; // 2–3 s idle
+      const wait = 2000 + Math.random() * 1000; // 2–3 s
       setTimeout(loop, wait);
     };
     loop();
   }, [isMobile]);
 
-  /* ---- BLINK LOOP ---- */
+  /* Random blinking loop */
   useEffect(() => {
     const loop = () => {
       const delay = 5000 + Math.random() * 3000; // 5–8 s
@@ -73,7 +78,7 @@ function CuteEyes() {
     loop();
   }, []);
 
-  /* ---- MOVE PUPILS ---- */
+  /* Move pupils */
   useEffect(() => {
     const moveOne = (wrap, pupil) => {
       if (!wrap || !pupil) return;
@@ -86,13 +91,16 @@ function CuteEyes() {
         nx = idleTarget.x;
         ny = idleTarget.y;
       } else {
-        const dx = mouse.x - cx, dy = mouse.y - cy;
+        const dx = mouse.x - cx;
+        const dy = mouse.y - cy;
         const len = Math.hypot(dx, dy) || 1;
         nx = (dx / len) * LIMIT;
         ny = (dy / len) * LIMIT;
       }
 
-      pupil.style.transition = "transform 0.45s ease-in-out";
+      pupil.style.transition = isMobile
+        ? "transform 0.5s ease-in-out"
+        : "transform 0.1s linear"; // ⚡ instant on desktop
       pupil.style.transform = `translate(${nx}px, ${ny}px)`;
     };
 
@@ -137,8 +145,8 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         <div
           className="absolute rounded-full"
           style={{
-            width: pupil * 0.5,
-            height: pupil * 0.5,
+            width: pupil * 0.55,
+            height: pupil * 0.55,
             right: pupil * -0.05,
             top: pupil * -0.05,
             background:
@@ -148,36 +156,14 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         />
       </div>
 
-      {/* top eyelid */}
+      {/* eyelids */}
       <div
         className="absolute inset-0 rounded-full bg-gradient-to-b from-[#e4c6a3] to-[#d5b085]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(-100%)",
           transition: "transform 0.15s ease-in-out",
         }}
-      >
-        {blink && (
-          <div
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-[2px]"
-            style={{ marginBottom: "-2px" }}
-          >
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-black"
-                style={{
-                  width: 2,
-                  height: 6,
-                  transform: `rotate(${(i - 2) * 12}deg)`,
-                  transformOrigin: "bottom center",
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* bottom eyelid */}
+      />
       <div
         className="absolute inset-0 rounded-full bg-gradient-to-t from-[#e4c6a3] to-[#d5b085]"
         style={{
