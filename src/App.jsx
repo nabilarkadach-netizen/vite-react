@@ -24,14 +24,60 @@ function CuteEyes() {
   const leftPupil = useRef(null);
   const rightPupil = useRef(null);
 
-  // Track mouse
+  const [isMobile, setIsMobile] = useState(false);
+  const [idleTarget, setIdleTarget] = useState({ x: 0, y: 0 });
+
+  /* Detect mobile (no mousemove) */
   useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    setIsMobile(mq.matches);
+  }, []);
+
+  /* Mouse tracking for desktop */
+  useEffect(() => {
+    if (isMobile) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", handle);
     return () => window.removeEventListener("mousemove", handle);
+  }, [isMobile]);
+
+  /* Random idle gaze for mobile */
+  useEffect(() => {
+    if (!isMobile) return;
+    const idleLoop = () => {
+      const angle = Math.random() * Math.PI * 2;
+      const strength = Math.random() * LIMIT;
+      setIdleTarget({
+        x: Math.cos(angle) * strength,
+        y: Math.sin(angle) * strength + 3, // prefer downward
+      });
+      const next = 1500 + Math.random() * 2500;
+      setTimeout(idleLoop, next);
+    };
+    idleLoop();
+  }, [isMobile]);
+
+  /* Blink loop: singles + occasional double */
+  useEffect(() => {
+    const loop = () => {
+      const delay = 2200 + Math.random() * 1200;
+      setTimeout(() => {
+        setBlink(true);
+        setTimeout(() => setBlink(false), 300);
+        // 20% chance of a double blink
+        if (Math.random() < 0.2) {
+          setTimeout(() => {
+            setBlink(true);
+            setTimeout(() => setBlink(false), 300);
+          }, 600);
+        }
+        loop();
+      }, delay);
+    };
+    loop();
   }, []);
 
-  // Pupil motion
+  /* Pupil motion */
   useEffect(() => {
     let raf;
     const move = () => {
@@ -40,11 +86,19 @@ function CuteEyes() {
         const rect = wrap.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
-        const dx = mouse.x - cx;
-        const dy = mouse.y - cy;
-        const len = Math.hypot(dx, dy) || 1;
-        const nx = (dx / len) * LIMIT;
-        const ny = (dy / len) * LIMIT;
+
+        let nx = 0, ny = 0;
+        if (isMobile) {
+          nx = idleTarget.x;
+          ny = idleTarget.y;
+        } else {
+          const dx = mouse.x - cx;
+          const dy = mouse.y - cy;
+          const len = Math.hypot(dx, dy) || 1;
+          nx = (dx / len) * LIMIT;
+          ny = (dy / len) * LIMIT;
+        }
+
         pupil.style.transform = `translate(${nx}px, ${ny}px)`;
       };
       moveOne(leftWrap.current, leftPupil.current);
@@ -53,20 +107,7 @@ function CuteEyes() {
     };
     move();
     return () => cancelAnimationFrame(raf);
-  }, [mouse]);
-
-  // Blink loop (synchronized)
-  useEffect(() => {
-    const loop = () => {
-      const delay = 2200 + Math.random() * 1000;
-      setTimeout(() => {
-        setBlink(true);
-        setTimeout(() => setBlink(false), 300); // slower, natural blink
-        loop();
-      }, delay);
-    };
-    loop();
-  }, []);
+  }, [mouse, idleTarget, isMobile]);
 
   return (
     <div className="flex items-center justify-center" style={{ height: EYE }}>
@@ -77,6 +118,7 @@ function CuteEyes() {
   );
 }
 
+/* -------------------- Single Eye -------------------- */
 function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
   return (
     <div
@@ -99,6 +141,7 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
           height: pupil,
           background:
             "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
+          transition: "transform 0.3s ease-out",
         }}
       >
         <div
@@ -123,7 +166,7 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
           transition: "transform 0.15s ease-in-out",
         }}
       >
-        {/* eyelashes — lower edge of top lid */}
+        {/* eyelashes along lower edge of top lid */}
         {blink && (
           <div
             className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-[2px]"
