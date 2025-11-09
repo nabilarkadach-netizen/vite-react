@@ -14,25 +14,25 @@ export default function Header() {
 
 function CuteEyes() {
   const EYE = 26;
-  const PUPIL = 14; // 🍼 Bigger baby-style pupil
+  const PUPIL = 20; // 🍼 larger, baby-style pupil
   const GAP = 6;
   const LIMIT = 6;
 
   const [blink, setBlink] = useState(false);
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
-  const [idleTarget, setIdleTarget] = useState({ x: 0, y: 0 });
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
 
-  const leftWrap = useRef(null), rightWrap = useRef(null);
-  const leftPupil = useRef(null), rightPupil = useRef(null);
+  const leftWrap = useRef(null);
+  const rightWrap = useRef(null);
+  const leftPupil = useRef(null);
+  const rightPupil = useRef(null);
 
   /* Detect mobile */
   useEffect(() => {
-    const m = window.matchMedia("(pointer: coarse)");
-    setIsMobile(m.matches);
+    setIsMobile(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
-  /* Desktop: follow mouse fast */
+  /* Desktop – follows mouse fast */
   useEffect(() => {
     if (isMobile) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
@@ -40,73 +40,72 @@ function CuteEyes() {
     return () => window.removeEventListener("mousemove", handle);
   }, [isMobile]);
 
-  /* Mobile: random gaze motion loop */
+  /* Blink loop (works for all devices) */
+  useEffect(() => {
+    const blinkLoop = () => {
+      const delay = 5000 + Math.random() * 3000; // 5–8 s
+      setTimeout(() => {
+        setBlink(true);
+        setTimeout(() => setBlink(false), 280);
+        if (Math.random() < 0.15) {
+          setTimeout(() => {
+            setBlink(true);
+            setTimeout(() => setBlink(false), 280);
+          }, 500);
+        }
+        blinkLoop();
+      }, delay);
+    };
+    blinkLoop();
+  }, []);
+
+  /* Mobile – independent JS animation (no state lag) */
   useEffect(() => {
     if (!isMobile) return;
 
     const positions = [
-      { x: LIMIT * 0.9, y: LIMIT * 0.6 },  // bottom-right
-      { x: 0, y: LIMIT * 0.6 },            // bottom-center
+      { x: LIMIT * 0.9, y: LIMIT * 0.6 }, // bottom-right
       { x: -LIMIT * 0.9, y: LIMIT * 0.6 }, // bottom-left
+      { x: 0, y: LIMIT * 0.6 }, // bottom-center
     ];
 
-    const loop = () => {
+    const moveRandom = () => {
       const next = positions[Math.floor(Math.random() * positions.length)];
-      setIdleTarget(next);
-      const wait = 2000 + Math.random() * 1000; // 2–3 s
-      setTimeout(loop, wait);
+      [leftPupil.current, rightPupil.current].forEach((p) => {
+        if (p) {
+          p.style.transition = "transform 0.4s ease-in-out";
+          p.style.transform = `translate(${next.x}px, ${next.y}px)`;
+        }
+      });
     };
-    loop();
+
+    const loop = setInterval(moveRandom, 2500 + Math.random() * 500); // every 2–3 s
+    moveRandom(); // initial
+    return () => clearInterval(loop);
   }, [isMobile]);
 
-  /* Random blinking loop */
+  /* Desktop – fast responsive tracking */
   useEffect(() => {
-    const loop = () => {
-      const delay = 5000 + Math.random() * 3000; // 5–8 s
-      setTimeout(() => {
-        setBlink(true);
-        setTimeout(() => setBlink(false), 300);
-        if (Math.random() < 0.15) {
-          setTimeout(() => {
-            setBlink(true);
-            setTimeout(() => setBlink(false), 300);
-          }, 600);
-        }
-        loop();
-      }, delay);
-    };
-    loop();
-  }, []);
+    if (isMobile) return;
 
-  /* Move pupils */
-  useEffect(() => {
     const moveOne = (wrap, pupil) => {
       if (!wrap || !pupil) return;
       const rect = wrap.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
+      const dx = mouse.x - cx;
+      const dy = mouse.y - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = (dx / len) * LIMIT;
+      const ny = (dy / len) * LIMIT;
 
-      let nx = 0, ny = 0;
-      if (isMobile) {
-        nx = idleTarget.x;
-        ny = idleTarget.y;
-      } else {
-        const dx = mouse.x - cx;
-        const dy = mouse.y - cy;
-        const len = Math.hypot(dx, dy) || 1;
-        nx = (dx / len) * LIMIT;
-        ny = (dy / len) * LIMIT;
-      }
-
-      pupil.style.transition = isMobile
-        ? "transform 0.5s ease-in-out"
-        : "transform 0.1s linear"; // ⚡ instant on desktop
+      pupil.style.transition = "transform 0.1s linear";
       pupil.style.transform = `translate(${nx}px, ${ny}px)`;
     };
 
     moveOne(leftWrap.current, leftPupil.current);
     moveOne(rightWrap.current, rightPupil.current);
-  }, [mouse, idleTarget, isMobile]);
+  }, [mouse, isMobile]);
 
   return (
     <div className="flex items-center justify-center" style={{ height: EYE }}>
@@ -117,7 +116,6 @@ function CuteEyes() {
   );
 }
 
-/* -------------------- EYE -------------------- */
 function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
   return (
     <div
@@ -142,11 +140,12 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
             "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
         }}
       >
+        {/* gloss follows pupil */}
         <div
           className="absolute rounded-full"
           style={{
-            width: pupil * 0.55,
-            height: pupil * 0.55,
+            width: pupil * 0.6,
+            height: pupil * 0.6,
             right: pupil * -0.05,
             top: pupil * -0.05,
             background:
