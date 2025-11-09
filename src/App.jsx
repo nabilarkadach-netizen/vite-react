@@ -27,13 +27,13 @@ function CuteEyes() {
   const [isMobile, setIsMobile] = useState(false);
   const [idleTarget, setIdleTarget] = useState({ x: 0, y: 0 });
 
-  /* Detect mobile (no mousemove) */
+  /* Detect mobile (no precise mouse) */
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse)");
     setIsMobile(mq.matches);
   }, []);
 
-  /* Mouse tracking for desktop */
+  /* Track mouse for desktop */
   useEffect(() => {
     if (isMobile) return;
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
@@ -41,31 +41,33 @@ function CuteEyes() {
     return () => window.removeEventListener("mousemove", handle);
   }, [isMobile]);
 
-  /* Random idle gaze for mobile */
+  /* Idle gaze motion for mobile */
   useEffect(() => {
     if (!isMobile) return;
-    const idleLoop = () => {
-      const angle = Math.random() * Math.PI * 2;
-      const strength = Math.random() * LIMIT;
-      setIdleTarget({
-        x: Math.cos(angle) * strength,
-        y: Math.sin(angle) * strength + 3, // prefer downward
-      });
-      const next = 1500 + Math.random() * 2500;
-      setTimeout(idleLoop, next);
+
+    const positions = [
+      { x: LIMIT * 0.8, y: LIMIT * 0.6 }, // down-right
+      { x: -LIMIT * 0.8, y: LIMIT * 0.6 }, // down-left
+      { x: 0, y: LIMIT * 0.6 }, // down-center
+    ];
+
+    const loop = () => {
+      const next = positions[Math.floor(Math.random() * positions.length)];
+      setIdleTarget(next);
+      const wait = 3000 + Math.random() * 3000; // 3–6 s between moves
+      setTimeout(loop, wait);
     };
-    idleLoop();
+    loop();
   }, [isMobile]);
 
-  /* Blink loop: singles + occasional double */
+  /* Blink loop (less frequent, natural double blinks) */
   useEffect(() => {
     const loop = () => {
-      const delay = 2200 + Math.random() * 1200;
+      const delay = 5000 + Math.random() * 3000; // 5–8 s between blinks
       setTimeout(() => {
         setBlink(true);
         setTimeout(() => setBlink(false), 300);
-        // 20% chance of a double blink
-        if (Math.random() < 0.2) {
+        if (Math.random() < 0.15) {
           setTimeout(() => {
             setBlink(true);
             setTimeout(() => setBlink(false), 300);
@@ -77,7 +79,7 @@ function CuteEyes() {
     loop();
   }, []);
 
-  /* Pupil motion */
+  /* Move pupils */
   useEffect(() => {
     let raf;
     const move = () => {
@@ -99,8 +101,10 @@ function CuteEyes() {
           ny = (dy / len) * LIMIT;
         }
 
+        pupil.style.transition = "transform 1.5s ease-in-out";
         pupil.style.transform = `translate(${nx}px, ${ny}px)`;
       };
+
       moveOne(leftWrap.current, leftPupil.current);
       moveOne(rightWrap.current, rightPupil.current);
       raf = requestAnimationFrame(move);
@@ -118,7 +122,7 @@ function CuteEyes() {
   );
 }
 
-/* -------------------- Single Eye -------------------- */
+/* -------------------- Eye Component -------------------- */
 function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
   return (
     <div
@@ -141,9 +145,9 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
           height: pupil,
           background:
             "radial-gradient(circle at 40% 40%, #111 0%, #222 60%, #000 100%)",
-          transition: "transform 0.3s ease-out",
         }}
       >
+        {/* gloss */}
         <div
           className="absolute rounded-full"
           style={{
@@ -166,7 +170,6 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
           transition: "transform 0.15s ease-in-out",
         }}
       >
-        {/* eyelashes along lower edge of top lid */}
         {blink && (
           <div
             className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-[2px]"
