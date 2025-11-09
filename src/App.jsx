@@ -24,14 +24,14 @@ function CuteEyes() {
   const leftPupil = useRef(null);
   const rightPupil = useRef(null);
 
-  // track mouse movement
+  // Track mouse
   useEffect(() => {
     const handle = (e) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", handle);
     return () => window.removeEventListener("mousemove", handle);
   }, []);
 
-  // pupils follow mouse
+  // Pupil motion
   useEffect(() => {
     let raf;
     const move = () => {
@@ -55,13 +55,13 @@ function CuteEyes() {
     return () => cancelAnimationFrame(raf);
   }, [mouse]);
 
-  // synchronized blinking loop
+  // Blink loop (synchronized)
   useEffect(() => {
     const loop = () => {
-      const delay = 2000 + Math.random() * 1200;
+      const delay = 2200 + Math.random() * 1000;
       setTimeout(() => {
         setBlink(true);
-        setTimeout(() => setBlink(false), 150); // open
+        setTimeout(() => setBlink(false), 300); // slower, natural blink
         loop();
       }, delay);
     };
@@ -120,14 +120,14 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         className="absolute inset-0 rounded-full bg-gradient-to-b from-[#e4c6a3] to-[#d5b085]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(-100%)",
-          transition: "transform 0.12s ease-in-out",
+          transition: "transform 0.15s ease-in-out",
         }}
       >
-        {/* eyelashes */}
+        {/* eyelashes — lower edge of top lid */}
         {blink && (
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 flex gap-1"
-            style={{ marginTop: "1px" }}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-[2px]"
+            style={{ marginBottom: "-2px" }}
           >
             {[...Array(5)].map((_, i) => (
               <div
@@ -137,6 +137,7 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
                   width: 2,
                   height: 6,
                   transform: `rotate(${(i - 2) * 12}deg)`,
+                  transformOrigin: "bottom center",
                 }}
               />
             ))}
@@ -149,7 +150,7 @@ function Eye({ size, pupil, wrapRef, pupilRef, blink }) {
         className="absolute inset-0 rounded-full bg-gradient-to-t from-[#e4c6a3] to-[#d5b085]"
         style={{
           transform: blink ? "translateY(0%)" : "translateY(100%)",
-          transition: "transform 0.12s ease-in-out",
+          transition: "transform 0.15s ease-in-out",
         }}
       />
     </div>
